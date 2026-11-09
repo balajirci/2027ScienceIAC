@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Abhinav - Earth Science & Astronomy Vault Science Trainer</title>
+<style>
+:root{--ink:#163447;--accent:#256b73;--accent2:#2c7754;--bad:#a33b2a;--muted:#526779;--paper:#ffffff;--bg:#eef2f4;--line:#d7e1e6}
+@media (prefers-color-scheme: dark){:root{--ink:#e8f0f3;--muted:#9db4c0;--paper:#16242e;--bg:#0d161c;--line:#2b3f4c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:20px}
+header{background:#163447;color:#fff;padding:26px;border-radius:18px}
+header h1{margin:4px 0 6px;font-size:clamp(24px,4vw,36px);line-height:1.15}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.small{font-size:13px;color:var(--muted)}
+header .small{color:#c8d8de}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+button{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 14px;background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){filter:brightness(.95)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+button.good{background:var(--accent2);border-color:var(--accent2);color:#fff}
+button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+select{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 12px;max-width:100%;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:24px}
+#card{border:2px solid var(--accent);border-radius:16px;padding:24px;min-height:230px;cursor:pointer;background:var(--paper)}
+#card .q{font-size:20px;line-height:1.65}
+#card .a{font-size:19px;background:#e7f3ed;border-left:4px solid var(--accent2);padding:14px;margin-top:16px;border-radius:6px;color:#163447}
+@media (prefers-color-scheme: dark){#card .a{color:#dff2e6;background:#1d3325}}
+#buzzline{background:#fdf3d8;border:1px solid #d9b84a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:650;color:#6b5410}
+@media (prefers-color-scheme: dark){#buzzline{color:#f0d48a;background:#33301c}}
+.tag{display:inline-block;background:#e9eff3;border-radius:20px;padding:3px 10px;font-size:12px;margin:0 6px 8px 0;color:#163447}
+#timerbar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+#timerfill{height:100%;background:var(--accent);width:100%}
+#timerfill.low{background:var(--bad)}
+.hidden{display:none!important}
+progress{width:100%;accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px;text-align:left;border-bottom:1px solid var(--line)}
+a{color:#176583}
+.foot{margin-top:16px}
+.cursor{color:var(--accent);font-weight:700}
+</style>
+<main>
+<header>
+<div class="eyebrow">Science Bee Trainer - Earth Science & Astronomy Vault</div>
+<h1>Ready to train, Abhinav?</h1>
+<div class="small">57 cards - 11 multi-clue buzzer tossups + 46 quick-recall cards. Choose a category and a mode, then tap Start Training. Study mode shows the whole question at once, with no clock. Buzzer mode reads the question out progressively, like a real tossup - buzz early for more points. Built from the Earth Science & Astronomy Science Vault question bank, audited November 2026.</div>
+</header>
+
+<section>
+<div class="row">
+<label>Category
+<select id="cat"></select></label>
+<label>Mode
+<select id="mode"><option value="buzzer" selected>Buzzer</option><option value="study">Study</option></select></label>
+<label id="speedWrap">Reading speed
+<select id="speed"><option value="300">Slow</option><option value="210" selected>Normal</option><option value="120">Fast</option></select></label>
+<button id="start" class="primary">Start Training</button>
+<button id="reviewBtn">Train Review Pool (<span id="reviewCount">0</span>)</button>
+<button id="resetStats">Reset saved stats</button>
+</div>
+<div class="stats">
+<div class="stat"><span class="small">Answered</span><b id="sAnswered">0</b></div>
+<div class="stat"><span class="small">Correct</span><b id="sCorrect">0</b></div>
+<div class="stat"><span class="small">Wrong</span><b id="sWrong">0</b></div>
+<div class="stat"><span class="small">Accuracy</span><b id="sAcc">-</b></div>
+<div class="stat"><span class="small">Score</span><b id="sScore">0</b></div>
+</div>
+<div class="small" id="modeHint" style="margin-top:10px">Space = Buzz &middot; Y = Correct &middot; N = Wrong &middot; S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.</div>
+</section>
+
+<section>
+<div class="row" style="justify-content:space-between">
+<b id="cardMeta">Card - / -</b>
+<b id="clock">30</b>
+</div>
+<div id="timerbar"><div id="timerfill"></div></div>
+<div id="buzzline" class="hidden"></div>
+<div id="card"><div class="q" id="qtext">Choose a category above, then tap Start Training.</div><div id="answer" class="hidden"></div></div>
+<div class="row" style="margin-top:14px">
+<button id="buzz" class="primary">Buzz (Space)</button>
+<button id="reveal">Reveal Answer</button>
+<button id="correct" class="good" disabled>Knew it (Y)</button>
+<button id="wrong" class="bad" disabled>Missed it (N)</button>
+<button id="skip" disabled>Skip (S)</button>
+</div>
+<progress id="prog" value="0" max="57"></progress>
+<div class="small"><span id="seenLine">0 Knew &middot; 0 Missed &middot; 0 Seen</span></div>
+</section>
+
+<section>
+<h2 style="margin-top:0">Session Stats</h2>
+<div id="sessionStats" class="small">Start a session to see stats.</div>
+<h3>Review Pool (<span id="poolN">0</span>)</h3>
+<div id="pool" class="small">No misses yet!</div>
+<div class="foot small">
+<a href="biology-vault-trainer.html">Open the Biology & Anatomy Vault Trainer</a> &middot;
+<a href="chemistry-vault-trainer.html">Open the Chemistry Vault Trainer</a> &middot;
+<a href="physics-vault-trainer.html">Open the Physics Vault Trainer</a> &middot;
+<a href="white-trainer.html">Open the White Science Trainer</a> &middot;
+<a href="red-trainer.html">Open the Red Science Trainer</a> &middot;
+<a href="index.html">Open the White Science moderator pack</a>
+</div>
+</section>
+</main>
+<script id="bank" type="application/json">[{"id": "E1-01", "round": "Geology & Mineralogy", "topic": "Mineralogy", "tossup": false, "q": "Which mineral property measures the color of the powder left behind when a mineral is scratched on an unglazed porcelain plate, a more reliable diagnostic than surface color? For example, pyrite gives a greenish-black one while gold gives a yellow one.", "a": "Streak"}, {"id": "E1-02", "round": "Geology & Mineralogy", "topic": "Mineralogy", "tossup": false, "q": "Silicates make up over 90 percent of Earth's crust. What fundamental structural unit consists of one silicon atom bonded to four oxygen atoms?", "a": "Silicon-oxygen tetrahedron (SiO4)"}, {"id": "E1-03", "round": "Geology & Mineralogy", "topic": "Mineralogy", "tossup": false, "q": "On the Mohs scale of hardness, which mineral defines a hardness of 7 and is the second most abundant mineral in Earth's crust after feldspar?", "a": "Quartz"}, {"id": "E1-04", "round": "Geology & Mineralogy", "topic": "Rocks", "tossup": false, "q": "Which metamorphic rock forms when sedimentary shale undergoes heat and pressure, often splitting along thin parallel foliation planes?", "a": "Slate"}, {"id": "E1-05", "round": "Geology & Mineralogy", "topic": "Rocks", "tossup": false, "q": "What intrusive igneous rock predominantly makes up continental crust and metamorphoses into gneiss?", "a": "Granite"}, {"id": "E1-06", "round": "Geology & Mineralogy", "topic": "Volcanology", "tossup": false, "q": "What scale ranging from 0 to 8 measures the explosive magnitude of volcanic eruptions based on ejecta volume and plume height?", "a": "Volcanic Explosivity Index (VEI)"}, {"id": "E1-07", "round": "Geology & Mineralogy", "topic": "Volcanology", "tossup": false, "q": "Smooth, ropy basaltic lava is known by what Hawaiian term, contrasted with rough, blocky a'a lava?", "a": "Pahoehoe"}, {"id": "E1-08", "round": "Geology & Mineralogy", "topic": "Earth structure", "tossup": false, "q": "Which geological boundary separates Earth's rigid crust from the underlying silicate mantle?", "a": "Mohorovicic discontinuity (Moho)"}, {"id": "E1-09", "round": "Geology & Mineralogy", "topic": "Petrology", "tossup": false, "q": "What rock crystallization sequence, named for a Canadian geologist, describes the order in which silicate minerals crystallize from cooling basaltic magma across continuous and discontinuous branches?", "a": "Bowen's reaction series"}, {"id": "E1-10", "round": "Geology & Mineralogy", "topic": "Landforms", "tossup": false, "q": "What term describes landscapes characterized by sinkholes, caves, and underground drainage systems formed by the dissolution of soluble rocks like limestone?", "a": "Karst topography"}, {"id": "E1-T1", "round": "Geology & Mineralogy", "topic": "Mineralogy", "tossup": true, "q": "An iridescent plagioclase variety of this mineral family found in Labrador exhibits labradorescence. Members of this family form the continuous branch of Bowen's reaction series, potassium-rich varieties like orthoclase define a rating of 6 on the Mohs hardness scale, and they compose over 40 percent of Earth's crust by weight. Name this most abundant group of silicate minerals in Earth's crust.", "a": "Feldspar (accept plagioclase or orthoclase)"}, {"id": "E1-T2", "round": "Geology & Mineralogy", "topic": "Volcanology", "tossup": true, "q": "One of these structures in Iceland named Surtshellir is associated with the fire giant Surtr. Skylights form when their upper crusts collapse, and they form when pahoehoe lava streams cool and solidify on top while the interior liquid continues to flow out. Name these subterranean conduits created by flowing molten rock.", "a": "Lava tubes"}, {"id": "E1-T3", "round": "Geology & Mineralogy", "topic": "Earth structure", "tossup": true, "q": "The D-double-prime layer lies directly above the bottom boundary of this geological region. Mantle plumes originate at its base to feed volcanic hotspots like Hawaii, and convection within this layer drives the movement of lithospheric tectonic plates. Name this thickest layer of Earth's interior, situated between the crust and the outer core.", "a": "Mantle"}, {"id": "E2-01", "round": "Meteorology & Severe Weather", "topic": "Circulation", "tossup": false, "q": "Which atmospheric cell circulates air between the equator and approximately 30 degrees north and south latitude, driving the trade winds?", "a": "Hadley cell"}, {"id": "E2-02", "round": "Meteorology & Severe Weather", "topic": "Dynamics", "tossup": false, "q": "What apparent force caused by Earth's rotation deflects moving air currents to the right in the Northern Hemisphere and to the left in the Southern Hemisphere?", "a": "Coriolis effect"}, {"id": "E2-03", "round": "Meteorology & Severe Weather", "topic": "Clouds", "tossup": false, "q": "What thunderstorm cloud type is characterized by an anvil top, or incus, and produces heavy precipitation, hail, and tornadoes?", "a": "Cumulonimbus"}, {"id": "E2-04", "round": "Meteorology & Severe Weather", "topic": "Precipitation", "tossup": false, "q": "What precipitation phenomenon occurs when rain or ice crystals fall from a cloud but evaporate or sublimate before reaching the ground?", "a": "Virga"}, {"id": "E2-05", "round": "Meteorology & Severe Weather", "topic": "Atmospheric layers", "tossup": false, "q": "Which atmospheric layer lies directly above the troposphere, contains the ozone layer, and experiences increasing temperatures with altitude?", "a": "Stratosphere"}, {"id": "E2-06", "round": "Meteorology & Severe Weather", "topic": "Severe weather", "tossup": false, "q": "The Saffir-Simpson scale rates the intensity of which type of weather system from Category 1 to Category 5 based on sustained wind speeds?", "a": "Hurricanes (tropical cyclones)"}, {"id": "E2-07", "round": "Meteorology & Severe Weather", "topic": "Severe weather", "tossup": false, "q": "What scale rates tornado intensity from EF0 to EF5 based on structural damage and wind speed estimates?", "a": "Enhanced Fujita (EF) scale"}, {"id": "E2-08", "round": "Meteorology & Severe Weather", "topic": "Climate", "tossup": false, "q": "What meteorological phenomenon causes the peak hottest and coldest temperatures of a year to occur several weeks after the summer and winter solstices?", "a": "Seasonal lag (thermal inertia)"}, {"id": "E2-09", "round": "Meteorology & Severe Weather", "topic": "Winds", "tossup": false, "q": "What fast-moving narrow air currents flow near the tropopause at boundaries between major air masses?", "a": "Jet streams"}, {"id": "E2-10", "round": "Meteorology & Severe Weather", "topic": "Atmospheric layers", "tossup": false, "q": "Which region of the atmosphere experiences the lowest natural temperatures on Earth, reaching down to about minus 90 degrees Celsius near its upper boundary, the mesopause?", "a": "Mesosphere"}, {"id": "E2-T1", "round": "Meteorology & Severe Weather", "topic": "Severe weather", "tossup": true, "q": "Edward Lorenz's work on weather prediction and chaos theory grew out of studying atmospheric systems like these, whose tropical activity is influenced by the Madden-Julian oscillation. In the Northwest Pacific, intense versions of these systems are called typhoons, whereas across the Atlantic they are rated on the Saffir-Simpson scale. Name these massive low-pressure tropical storm systems with violent spinning winds surrounding a calm eye.", "a": "Tropical cyclones (accept hurricanes or typhoons)"}, {"id": "E2-T2", "round": "Meteorology & Severe Weather", "topic": "Atmospheric chemistry", "tossup": true, "q": "The depletion of this gas over Antarctica is measured in Dobson units and was mitigated by the 1987 Montreal Protocol banning chlorofluorocarbons. Formed by three oxygen atoms, it absorbs harmful solar ultraviolet-B radiation in the stratosphere. Name this protective atmospheric gas.", "a": "Ozone (O3)"}, {"id": "E3-01", "round": "Oceanography & Hydrology", "topic": "Currents", "tossup": false, "q": "What wind-driven oceanographic process causes the net movement of surface waters at a 90-degree angle to the wind direction in the Northern Hemisphere, driving upwelling?", "a": "Ekman transport"}, {"id": "E3-02", "round": "Oceanography & Hydrology", "topic": "Deep sea", "tossup": false, "q": "What deep-sea structures form near volcanically active mid-ocean ridges, emitting mineral-rich waters, and are categorized as black smokers or white smokers?", "a": "Hydrothermal vents"}, {"id": "E3-03", "round": "Oceanography & Hydrology", "topic": "Currents", "tossup": false, "q": "The Sargasso Sea is located within which major ocean circulation feature, bounded by the Gulf Stream, North Atlantic Current, Canary Current, and North Equatorial Current?", "a": "North Atlantic Gyre"}, {"id": "E3-04", "round": "Oceanography & Hydrology", "topic": "Climate", "tossup": false, "q": "What ocean phenomenon occurs when trade winds weaken across the equatorial Pacific, allowing warm surface water to flow eastward toward South America?", "a": "El Nino (ENSO)"}, {"id": "E3-05", "round": "Oceanography & Hydrology", "topic": "Zones", "tossup": false, "q": "What deep-water ocean zone extends from 4,000 meters to 6,000 meters depth, covering most of the ocean basin floor?", "a": "Abyssal zone"}, {"id": "E3-06", "round": "Oceanography & Hydrology", "topic": "Waves", "tossup": false, "q": "What physical process causes a tsunami wave's speed to decrease and its height to increase dramatically as it enters shallow coastal waters?", "a": "Shoaling"}, {"id": "E3-07", "round": "Oceanography & Hydrology", "topic": "Currents", "tossup": false, "q": "Which warm ocean current flows northeastward along the US East Coast before crossing the North Atlantic, moderating Western Europe's climate?", "a": "Gulf Stream"}, {"id": "E3-08", "round": "Oceanography & Hydrology", "topic": "Circulation", "tossup": false, "q": "What term describes the deep-ocean global circulation driven by density differences resulting from temperature and salinity variations, also called the great ocean conveyor belt?", "a": "Thermohaline circulation"}, {"id": "E3-T1", "round": "Oceanography & Hydrology", "topic": "Deep sea", "tossup": true, "q": "Gunter Wachtershauser's iron-sulfur world theory suggested the origin of life occurred at these geological features. The alkaline Lost City field in the mid-Atlantic is a white variant of these features, while darker varieties called black smokers emit iron and copper sulfides into the deep ocean. Name these hydrothermal fissures on the ocean floor.", "a": "Hydrothermal vents (accept black smokers or white smokers)"}, {"id": "E3-T2", "round": "Oceanography & Hydrology", "topic": "Currents", "tossup": true, "q": "The western intensification of these features makes currents along the western boundaries of ocean basins, such as the Gulf Stream and Kuroshio Current, faster and deeper. Five major circular systems of these currents exist globally, rotating clockwise in the Northern Hemisphere and counter-clockwise in the Southern. Name these large systems of circulating ocean currents.", "a": "Ocean gyres"}, {"id": "E4-01", "round": "Planetary Astronomy", "topic": "Orbital mechanics", "tossup": false, "q": "Which of Kepler's laws states that a line segment joining a planet and the Sun sweeps out equal areas during equal intervals of time?", "a": "Second law (law of equal areas)"}, {"id": "E4-02", "round": "Planetary Astronomy", "topic": "Orbital mechanics", "tossup": false, "q": "What theoretical limit defines the minimum distance a celestial body can approach a primary body, held together only by gravity, before tidal forces pull it apart?", "a": "Roche limit"}, {"id": "E4-03", "round": "Planetary Astronomy", "topic": "Planetary geology", "tossup": false, "q": "What is the highest volcano and mountain in the Solar System, located on Mars in the Tharsis volcanic region?", "a": "Olympus Mons"}, {"id": "E4-04", "round": "Planetary Astronomy", "topic": "Moons", "tossup": false, "q": "Which Galilean moon of Jupiter is the most volcanically active body in the Solar System due to tidal heating?", "a": "Io"}, {"id": "E4-05", "round": "Planetary Astronomy", "topic": "Exploration", "tossup": false, "q": "What NASA space probe, launched in 2006, performed a flyby of Pluto in July 2015, capturing high-resolution images of its heart-shaped Tombaugh Regio?", "a": "New Horizons"}, {"id": "E4-06", "round": "Planetary Astronomy", "topic": "Moons", "tossup": false, "q": "What is the largest moon in the Solar System, and the only moon known to possess its own intrinsic magnetic field? It orbits Jupiter.", "a": "Ganymede"}, {"id": "E4-07", "round": "Planetary Astronomy", "topic": "Moons", "tossup": false, "q": "What moon of Saturn exhibits ice geysers at its southern tiger stripes, indicating a subsurface liquid ocean?", "a": "Enceladus"}, {"id": "E4-08", "round": "Planetary Astronomy", "topic": "Orbital mechanics", "tossup": false, "q": "What is the center of mass around which two or more celestial bodies orbit each other called?", "a": "Barycenter"}, {"id": "E4-09", "round": "Planetary Astronomy", "topic": "Solar system", "tossup": false, "q": "What vast spherical reservoir of icy planetesimals surrounding the Solar System extends up to about 100,000 astronomical units and is the source of long-period comets?", "a": "Oort cloud"}, {"id": "E4-10", "round": "Planetary Astronomy", "topic": "Planetary geology", "tossup": false, "q": "What large impact basin on Mercury displays an antipodal region of jumbled terrain caused by seismic shockwaves traveling through the planet?", "a": "Caloris Basin"}, {"id": "E4-T1", "round": "Planetary Astronomy", "topic": "Planets", "tossup": true, "q": "This planet's surface features pancake domes and elevated plateaus named Ishtar Terra and Aphrodite Terra. The Soviet Venera 8 probe achieved the first successful lander operations on this body, which experiences runaway greenhouse heating due to an atmosphere that is 96 percent carbon dioxide. Name this second planet from the Sun, often called Earth's twin.", "a": "Venus"}, {"id": "E4-T2", "round": "Planetary Astronomy", "topic": "Small bodies", "tossup": true, "q": "Giuseppe Piazzi discovered the largest body in this region in 1801; that body, Ceres, is now classified as a dwarf planet. Located between the orbits of Mars and Jupiter, name this circumstellar disc containing millions of rocky bodies.", "a": "Asteroid belt"}, {"id": "E5-01", "round": "Astrophysics & Cosmology", "topic": "Stellar astronomy", "tossup": false, "q": "The Hertzsprung-Russell diagram plots stellar absolute magnitude or luminosity against what property on the horizontal axis?", "a": "Surface temperature / spectral class"}, {"id": "E5-02", "round": "Astrophysics & Cosmology", "topic": "Stellar remnants", "tossup": false, "q": "What is the maximum theoretical mass of a stable white dwarf star, approximately 1.44 solar masses?", "a": "Chandrasekhar limit"}, {"id": "E5-03", "round": "Astrophysics & Cosmology", "topic": "Stellar remnants", "tossup": false, "q": "What dense stellar remnants rotate rapidly and emit directional beams of electromagnetic radiation like lighthouse beacons?", "a": "Pulsars"}, {"id": "E5-04", "round": "Astrophysics & Cosmology", "topic": "Cosmology", "tossup": false, "q": "What faint microwave radiation filling the universe has a blackbody temperature of approximately 2.7 kelvin and provides key evidence for the Big Bang?", "a": "Cosmic microwave background radiation (CMB)"}, {"id": "E5-05", "round": "Astrophysics & Cosmology", "topic": "Stellar astronomy", "tossup": false, "q": "Sub-stellar objects that lack sufficient mass to maintain sustained hydrogen-1 core fusion are known by what name? They are sometimes called failed stars.", "a": "Brown dwarfs"}, {"id": "E5-06", "round": "Astrophysics & Cosmology", "topic": "Cosmology", "tossup": false, "q": "Who formulated the law stating that the recessional velocity of a galaxy is directly proportional to its distance from Earth?", "a": "Edwin Hubble"}, {"id": "E5-07", "round": "Astrophysics & Cosmology", "topic": "Stellar remnants", "tossup": false, "q": "What superdense neutron star subtype possesses magnetic fields up to 10 to the 15th gauss, and is responsible for soft gamma repeaters?", "a": "Magnetar"}, {"id": "E5-08", "round": "Astrophysics & Cosmology", "topic": "Cosmology", "tossup": false, "q": "What theoretical epoch of rapid exponential spatial expansion occurred approximately 10 to the minus 36 to 10 to the minus 32 seconds after the Big Bang, as proposed by Alan Guth?", "a": "Cosmic inflation"}, {"id": "E5-T1", "round": "Astrophysics & Cosmology", "topic": "Stellar lifecycles", "tossup": true, "q": "Subtypes of these events include Type Ia, which occur when a white dwarf accretes excess mass from a binary companion and exceeds the Chandrasekhar limit, while Type II variants occur when massive stars undergo core collapse. These massive explosions outshine entire galaxies and produce elements heavier than iron through the r-process. Name these violent cataclysmic stellar explosions.", "a": "Supernovae"}, {"id": "E5-T2", "round": "Astrophysics & Cosmology", "topic": "Cosmology", "tossup": true, "q": "Arno Penzias and Robert Wilson won the 1978 Nobel Prize in Physics for accidentally detecting this signal using a horn antenna at Bell Labs. Satellite missions including COBE, WMAP, and Planck mapped its minute temperature fluctuations, and it exhibits a thermal blackbody spectrum at 2.725 kelvin. Name this relic electromagnetic radiation left over from the Big Bang.", "a": "Cosmic microwave background radiation (CMB)"}]</script>
+<script>
+'use strict';
+var BANK=JSON.parse(document.getElementById('bank').textContent);
+var SETNAME='earthVault';
+var KEY='abhinav-science-earth-vault-trainer-v1';
+var store={}; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}
+var queue=[],idx=-1,current=null,revealed=false,buzzed=false,readerDone=false;
+var words=[],wordIdx=0,reader=null,timer=null,timeLeft=30,buzzPct=0,lastPts=0;
+var mode='buzzer';
+var session={answered:0,correct:0,wrong:0,skipped:0,score:0};
+var $=function(id){return document.getElementById(id)};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+function cats(){
+  var seen=[],map={};
+  BANK.forEach(function(c){ if(!map[c.round]){map[c.round]=0;seen.push(c.round)} map[c.round]++ });
+  var out=[{name:'All cards',n:BANK.length,fn:function(c){return true}}];
+  seen.forEach(function(r){ out.push({name:r,n:map[r],fn:(function(rr){return function(c){return c.round===rr}})(r)}) });
+  out.push({name:'Buzzer tossups only',n:BANK.filter(function(c){return c.tossup}).length,fn:function(c){return !!c.tossup}});
+  out.push({name:'Quick recall only',n:BANK.filter(function(c){return !c.tossup}).length,fn:function(c){return !c.tossup}});
+  return out;
+}
+var CATS=cats();
+CATS.forEach(function(c,i){var o=document.createElement('option');o.value=i;o.textContent=c.name+' - '+c.n+' cards';$('cat').appendChild(o)});
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function poolIds(){return Object.keys(store).filter(function(id){return store[id]==='missed'})}
+function refreshPool(){
+  var ids=poolIds();$('reviewCount').textContent=ids.length;$('poolN').textContent=ids.length;
+  var knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  var seen=Object.keys(store).length;
+  $('seenLine').innerHTML=knew+' Knew &middot; '+ids.length+' Missed &middot; '+seen+' Seen';
+  $('prog').value=seen;
+  if(!ids.length){$('pool').textContent='No misses yet!';return}
+  var rows=ids.map(function(id){var c=BANK.filter(function(x){return x.id===id})[0];return c?('<tr><td>'+c.round+'</td><td>'+c.a+'</td></tr>'):''}).join('');
+  $('pool').innerHTML='<table>'+rows+'</table>';
+}
+function stats(){
+  $('sAnswered').textContent=session.answered;$('sCorrect').textContent=session.correct;$('sWrong').textContent=session.wrong;$('sScore').textContent=session.score;
+  $('sAcc').textContent=session.answered?Math.round(100*session.correct/session.answered)+'%':'-';
+  var overall=Object.keys(store).length, knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  $('sessionStats').innerHTML='This session: answered '+session.answered+', correct '+session.correct+', wrong '+session.wrong+', skipped '+session.skipped+', score '+session.score+(lastPts?' (last card: '+(lastPts>0?'+':'')+lastPts+')':'')+'.<br>Saved overall: '+overall+' seen, '+knew+' knew, accuracy '+(overall?Math.round(100*knew/overall)+'%':'-')+'.';
+}
+function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function stopReader(){if(reader){clearInterval(reader);reader=null}}
+function stopAll(){stopTimer();stopReader()}
+function startTimer(){
+  stopTimer();timeLeft=30;$('clock').textContent='30';$('timerfill').style.width='100%';$('timerfill').className='';
+  timer=setInterval(function(){timeLeft-=0.1;if(timeLeft<=0){timeLeft=0;$('clock').textContent='0';$('timerfill').style.width='0%';stopAll();timeout();return} $('clock').textContent=Math.ceil(timeLeft);$('timerfill').style.width=(timeLeft/30*100)+'%';if(timeLeft<=10)$('timerfill').className='low'},100);
+}
+function renderWords(){
+  var shown=words.slice(0,wordIdx).join(' ');
+  $('qtext').innerHTML=shown+(readerDone?'':' <span class="cursor">&#9612;</span>');
+}
+function startReader(){
+  stopReader();readerDone=false;
+  var pace=parseInt($('speed').value,10)||210;
+  reader=setInterval(function(){
+    wordIdx++;
+    if(wordIdx>=words.length){wordIdx=words.length;stopReader();readerDone=true;$('qtext').textContent=current.q;$('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - question complete, buzz or reveal';return}
+    renderWords();
+  },pace);
+}
+function showCard(){
+  current=queue[idx];revealed=false;buzzed=false;readerDone=false;buzzPct=0;
+  words=current.q.split(/\s+/);wordIdx=0;
+  $('buzzline').className='hidden';$('buzzline').textContent='';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round;
+  $('qtext').textContent='';
+  var ans=$('answer');ans.className='a hidden';ans.innerHTML='';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=false;
+  if(mode==='study'){readerDone=true;wordIdx=words.length;$('qtext').textContent=current.q;$('clock').textContent='Study';$('timerfill').style.width='100%';$('timerfill').className='';$('buzz').disabled=true}
+  else{$('buzz').disabled=false;startTimer();startReader()}
+  stats();
+}
+function buzzPoints(){ if(buzzPct<=33)return 15; if(buzzPct<=66)return 12; return 10 }
+function buzz(){
+  if(mode==='study')return;
+  if(!current||revealed||buzzed)return;
+  buzzed=true;stopAll();
+  buzzPct=words.length?Math.round(100*wordIdx/words.length):100;
+  $('qtext').textContent=words.slice(0,wordIdx).join(' ');
+  var bl=$('buzzline');bl.className='';bl.textContent='BUZZED at '+buzzPct+'% of the question - get it right for +'+buzzPoints()+' points (wrong = -5). Tap the card or Reveal Answer when ready.';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - BUZZED';
+  $('buzz').disabled=true;
+}
+function reveal(){
+  if(!current||revealed)return;revealed=true;stopAll();
+  $('qtext').textContent=current.q;
+  var ans=$('answer');ans.className='a';
+  ans.innerHTML='<span class="tag">'+current.topic+'</span>'+(current.tossup?'<span class="tag">Buzzer tossup</span>':'<span class="tag">Quick recall</span>')+'<br><b>Answer:</b> '+current.a;
+  $('correct').disabled=false;$('wrong').disabled=false;$('buzz').disabled=true;
+}
+function timeout(){ if(!current||revealed)return; reveal(); mark(false,true); }
+function pointsFor(knew){
+  if(mode==='study')return knew?10:0;
+  if(knew){ if(buzzed)return buzzPoints(); if(readerDone)return 10; return 5 }
+  return buzzed?-5:0;
+}
+function mark(knew,auto){
+  if(!current)return;
+  lastPts=pointsFor(knew);session.score+=lastPts;
+  store[current.id]=knew?'knew':'missed';save();
+  session.answered++; if(knew)session.correct++;else session.wrong++;
+  refreshPool();stats();
+  setTimeout(next, auto?700:150);
+}
+function next(){
+  idx++; if(idx>=queue.length){stopAll();current=null;$('cardMeta').textContent='Session complete';$('qtext').textContent='Done - every card in this run is finished. Start again or train the review pool.';$('answer').className='a hidden';$('buzzline').className='hidden';$('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;$('clock').textContent='-';return}
+  showCard();
+}
+function start(pool){
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  var sel=CATS[parseInt($('cat').value,10)];
+  var list=pool?BANK.filter(function(c){return store[c.id]==='missed'}):BANK.filter(sel.fn);
+  if(!list.length){alert('Nothing in this pool yet.');return}
+  queue=shuffle(list.slice());idx=0;session={answered:0,correct:0,wrong:0,skipped:0,score:0};lastPts=0;showCard();
+}
+$('start').onclick=function(){start(false)};
+$('reviewBtn').onclick=function(){start(true)};
+$('card').onclick=function(){if(!current||revealed)return; if(!buzzed&&!readerDone){buzz()} else {reveal()}};
+$('reveal').onclick=reveal;
+$('buzz').onclick=buzz;
+$('correct').onclick=function(){mark(true,false)};
+$('wrong').onclick=function(){mark(false,false)};
+$('skip').onclick=function(){if(!current)return;session.skipped++;stopAll();next();stats()};
+$('resetStats').onclick=function(){if(confirm('Clear saved knew/missed stats for this trainer?')){store={};save();refreshPool();stats()}};
+$('cat').addEventListener('change',function(){this.blur()});
+$('speed').addEventListener('change',function(){this.blur()});
+document.addEventListener('click',function(e){if(e.target&&e.target.tagName==='BUTTON'){e.target.blur()}});
+document.addEventListener('keydown',function(e){
+  var t=e.target&&e.target.tagName;
+  if(t==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();e.stopPropagation();if(mode==='study'){reveal()}else{buzz()}}
+  else if(e.key==='y'||e.key==='Y'){if(revealed)mark(true,false)}
+  else if(e.key==='n'||e.key==='N'){if(revealed)mark(false,false)}
+  else if(e.key==='s'||e.key==='S'){if(current&&!revealed){session.skipped++;stopAll();next();stats()}}
+},true);
+var BUZZ_HINT='Space = Buzz \u00b7 Y = Correct \u00b7 N = Wrong \u00b7 S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.';
+var STUDY_HINT='Study mode: the full question is shown at once and there is no clock. Read and think, then Reveal Answer (or press Space) and mark Knew it (+10) or Missed it. Misses still go to the Review Pool, so you can switch to Buzzer mode and test them under pressure.';
+function applyModeUI(){
+  $('speedWrap').style.display=(mode==='study')?'none':'';
+  $('modeHint').textContent=(mode==='study')?STUDY_HINT:BUZZ_HINT;
+}
+$('mode').addEventListener('change',function(){
+  mode=this.value;this.blur();
+  try{localStorage.setItem(KEY+'-mode',mode)}catch(e){}
+  applyModeUI();stopAll();current=null;
+  $('cardMeta').textContent='Card - / -';$('clock').textContent='-';
+  $('qtext').textContent='Mode set to '+(mode==='study'?'Study':'Buzzer')+'. Tap Start Training when ready.';
+  $('answer').className='a hidden';$('buzzline').className='hidden';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;
+});
+try{var savedMode=localStorage.getItem(KEY+'-mode');if(savedMode==='study'||savedMode==='buzzer'){mode=savedMode}}catch(e){}
+$('mode').value=mode;applyModeUI();
+refreshPool();stats();
+</script>
+</html>

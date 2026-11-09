@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Abhinav - Biology & Anatomy Vault Science Trainer</title>
+<style>
+:root{--ink:#163447;--accent:#256b73;--accent2:#2c7754;--bad:#a33b2a;--muted:#526779;--paper:#ffffff;--bg:#eef2f4;--line:#d7e1e6}
+@media (prefers-color-scheme: dark){:root{--ink:#e8f0f3;--muted:#9db4c0;--paper:#16242e;--bg:#0d161c;--line:#2b3f4c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:20px}
+header{background:#163447;color:#fff;padding:26px;border-radius:18px}
+header h1{margin:4px 0 6px;font-size:clamp(24px,4vw,36px);line-height:1.15}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.small{font-size:13px;color:var(--muted)}
+header .small{color:#c8d8de}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+button{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 14px;background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){filter:brightness(.95)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+button.good{background:var(--accent2);border-color:var(--accent2);color:#fff}
+button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+select{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 12px;max-width:100%;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:24px}
+#card{border:2px solid var(--accent);border-radius:16px;padding:24px;min-height:230px;cursor:pointer;background:var(--paper)}
+#card .q{font-size:20px;line-height:1.65}
+#card .a{font-size:19px;background:#e7f3ed;border-left:4px solid var(--accent2);padding:14px;margin-top:16px;border-radius:6px;color:#163447}
+@media (prefers-color-scheme: dark){#card .a{color:#dff2e6;background:#1d3325}}
+#buzzline{background:#fdf3d8;border:1px solid #d9b84a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:650;color:#6b5410}
+@media (prefers-color-scheme: dark){#buzzline{color:#f0d48a;background:#33301c}}
+.tag{display:inline-block;background:#e9eff3;border-radius:20px;padding:3px 10px;font-size:12px;margin:0 6px 8px 0;color:#163447}
+#timerbar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+#timerfill{height:100%;background:var(--accent);width:100%}
+#timerfill.low{background:var(--bad)}
+.hidden{display:none!important}
+progress{width:100%;accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px;text-align:left;border-bottom:1px solid var(--line)}
+a{color:#176583}
+.foot{margin-top:16px}
+.cursor{color:var(--accent);font-weight:700}
+</style>
+<main>
+<header>
+<div class="eyebrow">Science Bee Trainer - Biology & Anatomy Vault</div>
+<h1>Ready to train, Abhinav?</h1>
+<div class="small">79 cards - 12 multi-clue buzzer tossups + 67 quick-recall cards. Choose a category and a mode, then tap Start Training. Study mode shows the whole question at once, with no clock. Buzzer mode reads the question out progressively, like a real tossup - buzz early for more points. Built from the Biology & Anatomy Science Vault question bank, audited November 2026.</div>
+</header>
+
+<section>
+<div class="row">
+<label>Category
+<select id="cat"></select></label>
+<label>Mode
+<select id="mode"><option value="buzzer" selected>Buzzer</option><option value="study">Study</option></select></label>
+<label id="speedWrap">Reading speed
+<select id="speed"><option value="300">Slow</option><option value="210" selected>Normal</option><option value="120">Fast</option></select></label>
+<button id="start" class="primary">Start Training</button>
+<button id="reviewBtn">Train Review Pool (<span id="reviewCount">0</span>)</button>
+<button id="resetStats">Reset saved stats</button>
+</div>
+<div class="stats">
+<div class="stat"><span class="small">Answered</span><b id="sAnswered">0</b></div>
+<div class="stat"><span class="small">Correct</span><b id="sCorrect">0</b></div>
+<div class="stat"><span class="small">Wrong</span><b id="sWrong">0</b></div>
+<div class="stat"><span class="small">Accuracy</span><b id="sAcc">-</b></div>
+<div class="stat"><span class="small">Score</span><b id="sScore">0</b></div>
+</div>
+<div class="small" id="modeHint" style="margin-top:10px">Space = Buzz &middot; Y = Correct &middot; N = Wrong &middot; S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.</div>
+</section>
+
+<section>
+<div class="row" style="justify-content:space-between">
+<b id="cardMeta">Card - / -</b>
+<b id="clock">30</b>
+</div>
+<div id="timerbar"><div id="timerfill"></div></div>
+<div id="buzzline" class="hidden"></div>
+<div id="card"><div class="q" id="qtext">Choose a category above, then tap Start Training.</div><div id="answer" class="hidden"></div></div>
+<div class="row" style="margin-top:14px">
+<button id="buzz" class="primary">Buzz (Space)</button>
+<button id="reveal">Reveal Answer</button>
+<button id="correct" class="good" disabled>Knew it (Y)</button>
+<button id="wrong" class="bad" disabled>Missed it (N)</button>
+<button id="skip" disabled>Skip (S)</button>
+</div>
+<progress id="prog" value="0" max="79"></progress>
+<div class="small"><span id="seenLine">0 Knew &middot; 0 Missed &middot; 0 Seen</span></div>
+</section>
+
+<section>
+<h2 style="margin-top:0">Session Stats</h2>
+<div id="sessionStats" class="small">Start a session to see stats.</div>
+<h3>Review Pool (<span id="poolN">0</span>)</h3>
+<div id="pool" class="small">No misses yet!</div>
+<div class="foot small">
+<a href="chemistry-vault-trainer.html">Open the Chemistry Vault Trainer</a> &middot;
+<a href="physics-vault-trainer.html">Open the Physics Vault Trainer</a> &middot;
+<a href="earth-vault-trainer.html">Open the Earth Science & Astronomy Vault Trainer</a> &middot;
+<a href="white-trainer.html">Open the White Science Trainer</a> &middot;
+<a href="red-trainer.html">Open the Red Science Trainer</a> &middot;
+<a href="index.html">Open the White Science moderator pack</a>
+</div>
+</section>
+</main>
+<script id="bank" type="application/json">[{"id": "B1-01", "round": "Cell Biology & Biochemistry", "topic": "Organelles", "tossup": false, "q": "Which organelle is responsible for molecular transport and contains flattened sac-like structures called cisternae, processing, sorting, and packaging proteins and lipids made in the cell?", "a": "Golgi apparatus"}, {"id": "B1-02", "round": "Cell Biology & Biochemistry", "topic": "Mitosis", "tossup": false, "q": "In mitosis, which phase immediately precedes anaphase, when chromosomes are aligned along the equatorial metaphase plate?", "a": "Metaphase"}, {"id": "B1-03", "round": "Cell Biology & Biochemistry", "topic": "Organelles", "tossup": false, "q": "Which organelle possesses its own circular loop of DNA and a double membrane, supporting the endosymbiotic theory of eukaryotic origin?", "a": "Mitochondrion"}, {"id": "B1-04", "round": "Cell Biology & Biochemistry", "topic": "Photosynthesis", "tossup": false, "q": "Which stage of photosynthesis involves carbon fixation via the enzyme RuBisCo and occurs in the stroma of chloroplasts?", "a": "Calvin cycle"}, {"id": "B1-05", "round": "Cell Biology & Biochemistry", "topic": "Organelles", "tossup": false, "q": "Which organelle is characterized by membrane-bound ribosomes on its surface that are actively synthesizing proteins?", "a": "Rough endoplasmic reticulum"}, {"id": "B1-06", "round": "Cell Biology & Biochemistry", "topic": "Cell death", "tossup": false, "q": "Which programmed cell death process involves activation of caspases, release of cytochrome c from mitochondria, and regulation by p53, Bak, and Bax proteins?", "a": "Apoptosis"}, {"id": "B1-07", "round": "Cell Biology & Biochemistry", "topic": "Organelles", "tossup": false, "q": "Which organelle contains acid hydrolases at an internal pH of about 4.5 to break down cellular waste, and is the organelle whose enzyme defects cause gangliosides to accumulate in Tay-Sachs disease?", "a": "Lysosome"}, {"id": "B1-08", "round": "Cell Biology & Biochemistry", "topic": "Cytoskeleton", "tossup": false, "q": "Which protein forms microfilaments in the cytoskeleton and works alongside myosin to drive muscle contraction?", "a": "Actin"}, {"id": "B1-09", "round": "Cell Biology & Biochemistry", "topic": "Physiology", "tossup": false, "q": "What cellular condition of oxygen deprivation activates hypoxia-inducible factors (HIF) and increases erythropoietin (EPO) production?", "a": "Hypoxia"}, {"id": "B1-10", "round": "Cell Biology & Biochemistry", "topic": "Cell types", "tossup": false, "q": "Which lipid-storing cell type exists as white (WAT), marrow (MAT), and brown (BAT) varieties, with the brown form containing abundant mitochondria for thermogenesis?", "a": "Adipocytes"}, {"id": "B1-T1", "round": "Cell Biology & Biochemistry", "topic": "Cytoskeleton", "tossup": true, "q": "In mammals, vinculin connects this protein to integrin cell-adhesion complexes, and its polymerization into filaments is regulated by thymosin, profilin, and the Arp2/3 complex. This protein exists in globular monomeric G forms and filamentous polymeric F forms, and in striated muscle cells it forms the thin filaments that slide relative to thick myosin filaments. Name this abundant microfilament protein essential for cell motility, cytokinesis, and muscle contraction.", "a": "Actin"}, {"id": "B1-T2", "round": "Cell Biology & Biochemistry", "topic": "Enzymes", "tossup": true, "q": "Rapamycin targets a serine/threonine enzyme of this class called mTOR that normally inhibits autophagy. In the first step of glycolysis, a hexose-directed enzyme of this class transfers a phosphate group to glucose, forming glucose-6-phosphate. The activity of these enzymes is directly reversed by protein phosphatases, and ATP frequently serves as their phosphate donor. Name this broad class of enzymes that catalyze the transfer of phosphate groups from high-energy donor molecules to specific substrates.", "a": "Kinases (accept hexokinase)"}, {"id": "B1-T3", "round": "Cell Biology & Biochemistry", "topic": "Metabolism", "tossup": true, "q": "This metabolic pathway's oxidative phase generates two molecules of NADPH and one molecule of ribulose 5-phosphate from glucose 6-phosphate. Operating in parallel to glycolysis, its non-oxidative phase uses transaldolase and transketolase enzymes to synthesize 5-carbon sugars needed for nucleotide biosynthesis. Name this anabolic pathway also known as the hexose monophosphate shunt, or HMP shunt.", "a": "Pentose phosphate pathway (accept HMP shunt)"}, {"id": "B2-01", "round": "Genetics & Molecular Biology", "topic": "Transcription", "tossup": false, "q": "Which enzyme is responsible for synthesizing a single-stranded RNA transcript from a DNA template during transcription?", "a": "RNA polymerase"}, {"id": "B2-02", "round": "Genetics & Molecular Biology", "topic": "Gene regulation", "tossup": false, "q": "Which promoter DNA sequence, located roughly 25 to 30 base pairs upstream of the transcription start site in eukaryotes, binds transcription factors such as TATA-binding protein to initiate transcription?", "a": "TATA box"}, {"id": "B2-03", "round": "Genetics & Molecular Biology", "topic": "Nucleic acids", "tossup": false, "q": "Which nitrogenous base is present in RNA but absent in standard DNA, pairing with adenine in place of thymine?", "a": "Uracil"}, {"id": "B2-04", "round": "Genetics & Molecular Biology", "topic": "Replication", "tossup": false, "q": "What name is given to the short, discontinuous segments of DNA synthesized on the lagging strand during replication and later joined by DNA ligase?", "a": "Okazaki fragments"}, {"id": "B2-05", "round": "Genetics & Molecular Biology", "topic": "RNA processing", "tossup": false, "q": "Which non-coding modification is added to the 3-prime end of eukaryotic mature mRNA transcripts to prevent enzymatic degradation and assist nuclear export?", "a": "Poly-A tail"}, {"id": "B2-06", "round": "Genetics & Molecular Biology", "topic": "Development", "tossup": false, "q": "Which regulatory genes control the anterior-posterior body axis layout during embryonic development, with mutations able to cause legs to grow where antennae should be in fruit flies?", "a": "Hox genes (homeobox genes)"}, {"id": "B2-07", "round": "Genetics & Molecular Biology", "topic": "Mobile elements", "tossup": false, "q": "Which transposable genetic elements were first discovered in maize by Barbara McClintock because of their ability to change positions within a genome?", "a": "Transposons (jumping genes)"}, {"id": "B2-08", "round": "Genetics & Molecular Biology", "topic": "Biotechnology", "tossup": false, "q": "Which gene-editing system, developed by Jennifer Doudna and Emmanuelle Charpentier, uses a guide RNA and the Cas9 endonuclease to introduce precise double-strand breaks in target DNA?", "a": "CRISPR/Cas9"}, {"id": "B2-09", "round": "Genetics & Molecular Biology", "topic": "Evolution", "tossup": false, "q": "What random evolutionary mechanism alters allele frequencies between generations due to chance sampling, especially in small populations or during genetic bottlenecks?", "a": "Genetic drift"}, {"id": "B2-10", "round": "Genetics & Molecular Biology", "topic": "Biotechnology", "tossup": false, "q": "Which molecular laboratory technique, invented by Kary Mullis in 1983, uses thermal cycling, specific primers, and Taq DNA polymerase to make millions of copies of a DNA sequence?", "a": "Polymerase Chain Reaction (PCR)"}, {"id": "B2-11", "round": "Genetics & Molecular Biology", "topic": "Viruses", "tossup": false, "q": "Which enzyme allows retroviruses such as HIV to synthesize complementary DNA using a single-stranded RNA viral genome as a template?", "a": "Reverse transcriptase"}, {"id": "B2-12", "round": "Genetics & Molecular Biology", "topic": "Microbiology", "tossup": false, "q": "What direct transfer process allows two bacterial cells temporarily joined by a sex pilus to exchange genetic material such as plasmids?", "a": "Conjugation"}, {"id": "B2-T1", "round": "Genetics & Molecular Biology", "topic": "Techniques", "tossup": true, "q": "One variant of this technique couples bisulfite treatment with firefly luciferase to measure CpG island methylation via released pyrophosphate. Illumina developed a high-throughput next-generation variant using flow cells with clustered primers, while Frederick Sanger developed the chain-termination method using fluorescent dideoxynucleotides. Name this essential genomic technique used to determine the exact order of nucleotide bases in a DNA sample.", "a": "DNA sequencing"}, {"id": "B2-T2", "round": "Genetics & Molecular Biology", "topic": "Model organisms", "tossup": true, "q": "Francois Jacob and Jacques Monod won the 1965 Nobel Prize for deciphering regulation of the lac operon in this organism. Its K-12 laboratory strain is classified as Biosafety Level 1, while its enterohemorrhagic O157:H7 serotype produces Shiga-like toxins that cause severe foodborne illness. Name this Gram-negative, rod-shaped coliform bacterium commonly found in the lower intestine of warm-blooded organisms.", "a": "Escherichia coli (E. coli)"}, {"id": "B3-01", "round": "Anatomy & Physiology", "topic": "Skeletal", "tossup": false, "q": "What is the longest, heaviest, and strongest bone in the human skeleton?", "a": "Femur"}, {"id": "B3-02", "round": "Anatomy & Physiology", "topic": "Cardiovascular", "tossup": false, "q": "Which structure in the right atrium of the heart acts as the primary natural pacemaker, initiating the electrical impulses that trigger atrial contraction?", "a": "Sinoatrial (SA) node"}, {"id": "B3-03", "round": "Anatomy & Physiology", "topic": "Urinary", "tossup": false, "q": "What specialized structural and functional unit of the kidney contains the glomerulus, Bowman's capsule, and renal tubules?", "a": "Nephron"}, {"id": "B3-04", "round": "Anatomy & Physiology", "topic": "Digestive", "tossup": false, "q": "Which specialized cells in the stomach mucosa produce hydrochloric acid and intrinsic factor, which is vital for vitamin B12 absorption?", "a": "Parietal cells"}, {"id": "B3-05", "round": "Anatomy & Physiology", "topic": "Respiratory", "tossup": false, "q": "Which dominant sheet of skeletal muscle contracts and flattens during inhalation to expand the volume of the thoracic cavity?", "a": "Diaphragm"}, {"id": "B3-06", "round": "Anatomy & Physiology", "topic": "Nervous", "tossup": false, "q": "Which part of the brain is responsible for fine motor coordination, posture, and balance, and contains Purkinje cells within its cortex?", "a": "Cerebellum"}, {"id": "B3-07", "round": "Anatomy & Physiology", "topic": "Organ systems", "tossup": false, "q": "Which organ system includes the skin, hair, nails, and exocrine glands, acting as the primary barrier against environmental pathogens and fluid loss?", "a": "Integumentary system"}, {"id": "B3-08", "round": "Anatomy & Physiology", "topic": "Digestive", "tossup": false, "q": "Which region of the human small intestine receives chyme from the stomach along with bile from the gallbladder and digestive enzymes from the pancreas?", "a": "Duodenum"}, {"id": "B3-09", "round": "Anatomy & Physiology", "topic": "Nervous", "tossup": false, "q": "Which specialized clear fluid surrounds the brain and spinal cord within the subarachnoid space, providing buoyancy, mechanical cushioning, and waste clearance?", "a": "Cerebrospinal fluid (CSF)"}, {"id": "B3-10", "round": "Anatomy & Physiology", "topic": "Endocrine", "tossup": false, "q": "Which small brain structure located below the thalamus connects the nervous system to the endocrine system by controlling the pituitary gland and regulating body temperature, thirst, and hunger?", "a": "Hypothalamus"}, {"id": "B3-T1", "round": "Anatomy & Physiology", "topic": "Respiratory", "tossup": true, "q": "Pores of Kohn allow collateral airflow between functional units in these organs, whose Type II pneumocytes secrete a dipalmitoylphosphatidylcholine lipid surfactant to reduce surface tension. Angiotensin-converting enzyme is predominantly expressed in their pulmonary vascular bed, and enclosed by double-layered pleural membranes, the right one is divided into three lobes and the left into two. Name these primary paired respiratory organs responsible for gas exchange between blood and inhaled air.", "a": "Lungs"}, {"id": "B3-T2", "round": "Anatomy & Physiology", "topic": "Hematology", "tossup": true, "q": "These non-nucleated, biconcave cells express decay-accelerating factor via GPI anchors, and as they age past 120 days, membrane phosphatidylserine flips to signal destruction by splenic macrophages. Deformed remnants of these cells called Howell-Jolly bodies are cleared by the spleen, and hematocrit measures the volume percentage of blood they occupy. Name these abundant blood cells loaded with iron-bearing hemoglobin that transport oxygen to tissues.", "a": "Red blood cells (erythrocytes)"}, {"id": "B4-01", "round": "Pathology & Medicine", "topic": "Infectious disease", "tossup": false, "q": "Which viral disease, eradicated globally in 1980 through vaccination, was tested by Edward Jenner in 1796 using cowpox fluid on James Phipps?", "a": "Smallpox"}, {"id": "B4-02", "round": "Pathology & Medicine", "topic": "Infectious disease", "tossup": false, "q": "Which mosquito-borne infectious disease is caused by single-celled Plasmodium parasites and can be partially resisted by heterozygous carriers of the sickle cell trait?", "a": "Malaria"}, {"id": "B4-03", "round": "Pathology & Medicine", "topic": "Neurology", "tossup": false, "q": "Which neurodegenerative disorder, caused by loss of dopamine-producing neurons in the substantia nigra, is characterized by resting tremors, rigidity, and a shuffling gait, and is treated with L-DOPA?", "a": "Parkinson's disease"}, {"id": "B4-04", "round": "Pathology & Medicine", "topic": "Endocrine", "tossup": false, "q": "Which metabolic disease results from insulin resistance or lack of insulin production by pancreatic beta cells, and is diagnosed using a hemoglobin A1c blood test?", "a": "Diabetes mellitus"}, {"id": "B4-05", "round": "Pathology & Medicine", "topic": "Infectious disease", "tossup": false, "q": "Which viral disease attacks motor neurons in the central nervous system to cause muscle weakness and paralysis, and was targeted by Jonas Salk's inactivated vaccine in 1955?", "a": "Poliomyelitis (polio)"}, {"id": "B4-06", "round": "Pathology & Medicine", "topic": "Nutrition", "tossup": false, "q": "Which fat-soluble vitamin is synthesized in human skin upon exposure to ultraviolet B sunlight and is essential for calcium absorption, preventing rickets in children?", "a": "Vitamin D"}, {"id": "B4-07", "round": "Pathology & Medicine", "topic": "Autoimmune", "tossup": false, "q": "Which autoimmune condition is characterized by a systemic butterfly-shaped malar rash across the cheeks and nose that worsens with sunlight exposure?", "a": "Systemic lupus erythematosus (lupus)"}, {"id": "B4-08", "round": "Pathology & Medicine", "topic": "Immunology", "tossup": false, "q": "Which organic nitrogenous compound, released by tissue mast cells and basophils, triggers vasodilation and inflammatory responses during allergic reactions, and is blocked by drugs like Zyrtec and Benadryl?", "a": "Histamine"}, {"id": "B4-09", "round": "Pathology & Medicine", "topic": "Infectious disease", "tossup": false, "q": "Which infectious hemorrhagic fever virus genus, named for a river in the Democratic Republic of the Congo, belongs to the Filoviridae family and caused a major outbreak in West Africa from 2013 to 2016?", "a": "Ebola virus"}, {"id": "B4-10", "round": "Pathology & Medicine", "topic": "Microbiology", "tossup": false, "q": "Which bacterial genus includes Gram-positive, spore-forming obligate anaerobes responsible for botulism, tetanus, and gas gangrene?", "a": "Clostridium"}, {"id": "B4-T1", "round": "Pathology & Medicine", "topic": "Immunology", "tossup": true, "q": "A form of this condition caused by monosodium urate crystal deposition in joints is termed gout, and the biopharmaceutical etanercept and TNF-alpha inhibitors like adalimumab treat a severe autoimmune form of this disease. In its osteoarthritis form, protective articular cartilage between bones grinds away, while in its rheumatoid form white blood cells invade synovial membranes. Name this general medical condition characterized by painful inflammation, stiffness, and degeneration of joints.", "a": "Arthritis (accept rheumatoid arthritis, osteoarthritis, or gout)"}, {"id": "B5-01", "round": "Botany & Plant Biology", "topic": "Transport", "tossup": false, "q": "Which vascular tissue in plants is responsible for transporting water and dissolved mineral nutrients upward from roots to stems and leaves?", "a": "Xylem"}, {"id": "B5-02", "round": "Botany & Plant Biology", "topic": "Transport", "tossup": false, "q": "Which bidirectional vascular tissue transports photosynthetic sugars from sugar sources such as leaves to sugar sinks such as roots and fruits?", "a": "Phloem"}, {"id": "B5-03", "round": "Botany & Plant Biology", "topic": "Hormones", "tossup": false, "q": "Which primary class of plant hormones regulates phototropism and apical dominance by promoting cell elongation on the shaded side of plant stems?", "a": "Auxins (e.g., indole-3-acetic acid)"}, {"id": "B5-04", "round": "Botany & Plant Biology", "topic": "Leaf anatomy", "tossup": false, "q": "What waxy, hydrophobic layer covers the outer epidermal surface of plant leaves to prevent excessive water loss through transpiration?", "a": "Cuticle"}, {"id": "B5-05", "round": "Botany & Plant Biology", "topic": "Leaf anatomy", "tossup": false, "q": "Which microscopic pores on the undersides of leaves, flanked by paired guard cells, open and close to regulate gas exchange and transpiration?", "a": "Stomata"}, {"id": "B5-06", "round": "Botany & Plant Biology", "topic": "Classification", "tossup": false, "q": "Which group of seed-producing land plants bears naked seeds on cones rather than enclosing seeds within fruit ovaries?", "a": "Gymnosperms"}, {"id": "B5-07", "round": "Botany & Plant Biology", "topic": "Hormones", "tossup": false, "q": "Which gaseous plant hormone promotes fruit ripening and the triple response in seedlings, and is inhibited during commercial fruit transport?", "a": "Ethylene"}, {"id": "B5-08", "round": "Botany & Plant Biology", "topic": "Hormones", "tossup": false, "q": "Which class of plant hormones stimulates stem elongation, seed germination, and flowering, and was discovered in rice plants affected by foolish seedling disease?", "a": "Gibberellins"}, {"id": "B5-09", "round": "Botany & Plant Biology", "topic": "Adaptations", "tossup": false, "q": "Which carnivorous plant captures insect prey using snapping, hinged leaf traps triggered by sensitive trigger hairs?", "a": "Venus flytrap (Dionaea muscipula)"}, {"id": "B5-10", "round": "Botany & Plant Biology", "topic": "Adaptations", "tossup": false, "q": "What ecological adaptation describes fire-stimulated seed release, seen in lodgepole pine cones that require extreme heat to melt their sealing resin?", "a": "Serotiny"}, {"id": "B6-01", "round": "Zoology & Taxonomy", "topic": "Mammals", "tossup": false, "q": "Which primitive order of egg-laying mammals includes the semi-aquatic duck-billed platypus and spiny echidnas?", "a": "Monotremata"}, {"id": "B6-02", "round": "Zoology & Taxonomy", "topic": "Birds", "tossup": false, "q": "Which flightless Australian bird of the genus Casuarius possesses a helmet-like casque on its head and a dangerous dagger-like claw on its inner toe?", "a": "Cassowary"}, {"id": "B6-03", "round": "Zoology & Taxonomy", "topic": "Invertebrates", "tossup": false, "q": "Which aquatic cephalopods possess eight arms, three hearts, blue copper-based hemocyanin blood, and high intelligence?", "a": "Octopuses"}, {"id": "B6-04", "round": "Zoology & Taxonomy", "topic": "Animal behavior", "tossup": false, "q": "What specialized figure-8 communication behavior, decoded by Nobel laureate Karl von Frisch, allows honeybees to share food location distance and direction?", "a": "Waggle dance"}, {"id": "B6-05", "round": "Zoology & Taxonomy", "topic": "Parasites", "tossup": false, "q": "Which parasitic mite transmits Deformed Wing Virus and is a primary driver of colony collapse disorder in honeybee hives?", "a": "Varroa destructor"}, {"id": "B6-06", "round": "Zoology & Taxonomy", "topic": "Invertebrates", "tossup": false, "q": "Which phylum of radially symmetric aquatic animals is characterized by specialized stinging organelles called nematocysts and body forms of polyps and medusae?", "a": "Cnidaria"}, {"id": "B6-07", "round": "Zoology & Taxonomy", "topic": "Mammals", "tossup": false, "q": "Which infraclass of pouched mammals includes kangaroos, koalas, and opossums, where underdeveloped young complete development inside a maternal pouch?", "a": "Marsupialia"}, {"id": "B6-08", "round": "Zoology & Taxonomy", "topic": "Fossils", "tossup": false, "q": "Which extinct Jurassic fossil genus represents an intermediate transitional state between feathered non-avian dinosaurs and modern birds?", "a": "Archaeopteryx"}, {"id": "B6-T1", "round": "Zoology & Taxonomy", "topic": "Mammals", "tossup": true, "q": "Naturalist George Shaw initially thought the first specimen of this animal sent by Captain John Hunter was a hoax constructed from a duck's bill sewn onto a quadruped's skin. Male members of this species possess venom-delivering spurs on their hind legs, and along with echidnas it is one of the few surviving prototherian mammals that lay eggs and use electroreception to detect prey underwater. Name this semi-aquatic, duck-billed, beaver-tailed monotreme endemic to eastern Australia.", "a": "Duck-billed platypus (Ornithorhynchus anatinus)"}, {"id": "B6-T2", "round": "Zoology & Taxonomy", "topic": "Birds", "tossup": true, "q": "Members of this class possess a specialized hematopoiesis organ called the bursa of Fabricius and an oil-secreting uropygial gland near the tail. All members of this class possess a ZW sex-determination system in which females are heterogametic, and evolving from small theropod dinosaurs, modern taxonomists classify them within Aves. Name these endothermic, feathered, egg-laying vertebrates whose forelimbs are modified into wings.", "a": "Birds (Aves)"}, {"id": "B7-01", "round": "Evolution & Ecology", "topic": "Evolution", "tossup": false, "q": "Which English naturalist developed the theory of evolution by natural selection, publishing his arguments in 1859 in On the Origin of Species?", "a": "Charles Darwin"}, {"id": "B7-02", "round": "Evolution & Ecology", "topic": "Evolution", "tossup": false, "q": "What disproved evolutionary theory proposed that organisms pass on physical traits acquired or modified during their individual lifetimes to their offspring?", "a": "Lamarckism (inheritance of acquired characteristics)"}, {"id": "B7-03", "round": "Evolution & Ecology", "topic": "Ecology", "tossup": false, "q": "Which process describes the gradual, predictable replacement of species within an ecological community over time following a disturbance or new habitat creation?", "a": "Ecological succession"}, {"id": "B7-04", "round": "Evolution & Ecology", "topic": "Ecology", "tossup": false, "q": "What maximum population size of a species can a specific environment sustain indefinitely given available food, habitat, water, and resources?", "a": "Carrying capacity (K)"}, {"id": "B7-05", "round": "Evolution & Ecology", "topic": "Ecology", "tossup": false, "q": "Which set of coupled differential equations models the population dynamics of predator-prey interactions over time?", "a": "Lotka-Volterra equations"}, {"id": "B7-06", "round": "Evolution & Ecology", "topic": "Biomes", "tossup": false, "q": "Which coastal tropical wetland biome is dominated by salt-tolerant trees that protect shorelines from erosion and storm surges?", "a": "Mangroves"}, {"id": "B7-07", "round": "Evolution & Ecology", "topic": "Evolution", "tossup": false, "q": "What phenomenon describes sexual selection driving the evolution of ostentatious male secondary sexual traits, like a peacock's tail, far beyond optimum survival fitness?", "a": "Fisherian runaway selection"}, {"id": "B7-T1", "round": "Evolution & Ecology", "topic": "Primatology", "tossup": true, "q": "This scientist's book Through the Window documented non-human cannibalistic infanticide during the Kasakela-Kahama war. While studying David Greybeard and Goliath, this researcher observed chimpanzees stripping leaves off twigs to fish for termites, challenging the definition of humans as the sole tool-making species. Name this British primatologist whose 60-year field study at Gombe Stream National Park made her the world's foremost expert on chimpanzees.", "a": "Jane Goodall"}, {"id": "B7-T2", "round": "Evolution & Ecology", "topic": "Conservation", "tossup": true, "q": "The acronym HIPPCO identifies primary threats to this entity, with habitat destruction representing the greatest single factor. E.O. Wilson championed the study of this property across ecosystem, species, and genetic levels, and hotspots of this property, like tropical rainforests and coral reefs, cover less than 3 percent of Earth's surface but harbor over 50 percent of endemic species. Name this biological term for the total variety and variability of life within a given biome or on planet Earth.", "a": "Biodiversity (biological diversity)"}]</script>
+<script>
+'use strict';
+var BANK=JSON.parse(document.getElementById('bank').textContent);
+var SETNAME='biologyVault';
+var KEY='abhinav-science-biology-vault-trainer-v1';
+var store={}; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}
+var queue=[],idx=-1,current=null,revealed=false,buzzed=false,readerDone=false;
+var words=[],wordIdx=0,reader=null,timer=null,timeLeft=30,buzzPct=0,lastPts=0;
+var mode='buzzer';
+var session={answered:0,correct:0,wrong:0,skipped:0,score:0};
+var $=function(id){return document.getElementById(id)};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+function cats(){
+  var seen=[],map={};
+  BANK.forEach(function(c){ if(!map[c.round]){map[c.round]=0;seen.push(c.round)} map[c.round]++ });
+  var out=[{name:'All cards',n:BANK.length,fn:function(c){return true}}];
+  seen.forEach(function(r){ out.push({name:r,n:map[r],fn:(function(rr){return function(c){return c.round===rr}})(r)}) });
+  out.push({name:'Buzzer tossups only',n:BANK.filter(function(c){return c.tossup}).length,fn:function(c){return !!c.tossup}});
+  out.push({name:'Quick recall only',n:BANK.filter(function(c){return !c.tossup}).length,fn:function(c){return !c.tossup}});
+  return out;
+}
+var CATS=cats();
+CATS.forEach(function(c,i){var o=document.createElement('option');o.value=i;o.textContent=c.name+' - '+c.n+' cards';$('cat').appendChild(o)});
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function poolIds(){return Object.keys(store).filter(function(id){return store[id]==='missed'})}
+function refreshPool(){
+  var ids=poolIds();$('reviewCount').textContent=ids.length;$('poolN').textContent=ids.length;
+  var knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  var seen=Object.keys(store).length;
+  $('seenLine').innerHTML=knew+' Knew &middot; '+ids.length+' Missed &middot; '+seen+' Seen';
+  $('prog').value=seen;
+  if(!ids.length){$('pool').textContent='No misses yet!';return}
+  var rows=ids.map(function(id){var c=BANK.filter(function(x){return x.id===id})[0];return c?('<tr><td>'+c.round+'</td><td>'+c.a+'</td></tr>'):''}).join('');
+  $('pool').innerHTML='<table>'+rows+'</table>';
+}
+function stats(){
+  $('sAnswered').textContent=session.answered;$('sCorrect').textContent=session.correct;$('sWrong').textContent=session.wrong;$('sScore').textContent=session.score;
+  $('sAcc').textContent=session.answered?Math.round(100*session.correct/session.answered)+'%':'-';
+  var overall=Object.keys(store).length, knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  $('sessionStats').innerHTML='This session: answered '+session.answered+', correct '+session.correct+', wrong '+session.wrong+', skipped '+session.skipped+', score '+session.score+(lastPts?' (last card: '+(lastPts>0?'+':'')+lastPts+')':'')+'.<br>Saved overall: '+overall+' seen, '+knew+' knew, accuracy '+(overall?Math.round(100*knew/overall)+'%':'-')+'.';
+}
+function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function stopReader(){if(reader){clearInterval(reader);reader=null}}
+function stopAll(){stopTimer();stopReader()}
+function startTimer(){
+  stopTimer();timeLeft=30;$('clock').textContent='30';$('timerfill').style.width='100%';$('timerfill').className='';
+  timer=setInterval(function(){timeLeft-=0.1;if(timeLeft<=0){timeLeft=0;$('clock').textContent='0';$('timerfill').style.width='0%';stopAll();timeout();return} $('clock').textContent=Math.ceil(timeLeft);$('timerfill').style.width=(timeLeft/30*100)+'%';if(timeLeft<=10)$('timerfill').className='low'},100);
+}
+function renderWords(){
+  var shown=words.slice(0,wordIdx).join(' ');
+  $('qtext').innerHTML=shown+(readerDone?'':' <span class="cursor">&#9612;</span>');
+}
+function startReader(){
+  stopReader();readerDone=false;
+  var pace=parseInt($('speed').value,10)||210;
+  reader=setInterval(function(){
+    wordIdx++;
+    if(wordIdx>=words.length){wordIdx=words.length;stopReader();readerDone=true;$('qtext').textContent=current.q;$('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - question complete, buzz or reveal';return}
+    renderWords();
+  },pace);
+}
+function showCard(){
+  current=queue[idx];revealed=false;buzzed=false;readerDone=false;buzzPct=0;
+  words=current.q.split(/\s+/);wordIdx=0;
+  $('buzzline').className='hidden';$('buzzline').textContent='';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round;
+  $('qtext').textContent='';
+  var ans=$('answer');ans.className='a hidden';ans.innerHTML='';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=false;
+  if(mode==='study'){readerDone=true;wordIdx=words.length;$('qtext').textContent=current.q;$('clock').textContent='Study';$('timerfill').style.width='100%';$('timerfill').className='';$('buzz').disabled=true}
+  else{$('buzz').disabled=false;startTimer();startReader()}
+  stats();
+}
+function buzzPoints(){ if(buzzPct<=33)return 15; if(buzzPct<=66)return 12; return 10 }
+function buzz(){
+  if(mode==='study')return;
+  if(!current||revealed||buzzed)return;
+  buzzed=true;stopAll();
+  buzzPct=words.length?Math.round(100*wordIdx/words.length):100;
+  $('qtext').textContent=words.slice(0,wordIdx).join(' ');
+  var bl=$('buzzline');bl.className='';bl.textContent='BUZZED at '+buzzPct+'% of the question - get it right for +'+buzzPoints()+' points (wrong = -5). Tap the card or Reveal Answer when ready.';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - BUZZED';
+  $('buzz').disabled=true;
+}
+function reveal(){
+  if(!current||revealed)return;revealed=true;stopAll();
+  $('qtext').textContent=current.q;
+  var ans=$('answer');ans.className='a';
+  ans.innerHTML='<span class="tag">'+current.topic+'</span>'+(current.tossup?'<span class="tag">Buzzer tossup</span>':'<span class="tag">Quick recall</span>')+'<br><b>Answer:</b> '+current.a;
+  $('correct').disabled=false;$('wrong').disabled=false;$('buzz').disabled=true;
+}
+function timeout(){ if(!current||revealed)return; reveal(); mark(false,true); }
+function pointsFor(knew){
+  if(mode==='study')return knew?10:0;
+  if(knew){ if(buzzed)return buzzPoints(); if(readerDone)return 10; return 5 }
+  return buzzed?-5:0;
+}
+function mark(knew,auto){
+  if(!current)return;
+  lastPts=pointsFor(knew);session.score+=lastPts;
+  store[current.id]=knew?'knew':'missed';save();
+  session.answered++; if(knew)session.correct++;else session.wrong++;
+  refreshPool();stats();
+  setTimeout(next, auto?700:150);
+}
+function next(){
+  idx++; if(idx>=queue.length){stopAll();current=null;$('cardMeta').textContent='Session complete';$('qtext').textContent='Done - every card in this run is finished. Start again or train the review pool.';$('answer').className='a hidden';$('buzzline').className='hidden';$('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;$('clock').textContent='-';return}
+  showCard();
+}
+function start(pool){
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  var sel=CATS[parseInt($('cat').value,10)];
+  var list=pool?BANK.filter(function(c){return store[c.id]==='missed'}):BANK.filter(sel.fn);
+  if(!list.length){alert('Nothing in this pool yet.');return}
+  queue=shuffle(list.slice());idx=0;session={answered:0,correct:0,wrong:0,skipped:0,score:0};lastPts=0;showCard();
+}
+$('start').onclick=function(){start(false)};
+$('reviewBtn').onclick=function(){start(true)};
+$('card').onclick=function(){if(!current||revealed)return; if(!buzzed&&!readerDone){buzz()} else {reveal()}};
+$('reveal').onclick=reveal;
+$('buzz').onclick=buzz;
+$('correct').onclick=function(){mark(true,false)};
+$('wrong').onclick=function(){mark(false,false)};
+$('skip').onclick=function(){if(!current)return;session.skipped++;stopAll();next();stats()};
+$('resetStats').onclick=function(){if(confirm('Clear saved knew/missed stats for this trainer?')){store={};save();refreshPool();stats()}};
+$('cat').addEventListener('change',function(){this.blur()});
+$('speed').addEventListener('change',function(){this.blur()});
+document.addEventListener('click',function(e){if(e.target&&e.target.tagName==='BUTTON'){e.target.blur()}});
+document.addEventListener('keydown',function(e){
+  var t=e.target&&e.target.tagName;
+  if(t==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();e.stopPropagation();if(mode==='study'){reveal()}else{buzz()}}
+  else if(e.key==='y'||e.key==='Y'){if(revealed)mark(true,false)}
+  else if(e.key==='n'||e.key==='N'){if(revealed)mark(false,false)}
+  else if(e.key==='s'||e.key==='S'){if(current&&!revealed){session.skipped++;stopAll();next();stats()}}
+},true);
+var BUZZ_HINT='Space = Buzz \u00b7 Y = Correct \u00b7 N = Wrong \u00b7 S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.';
+var STUDY_HINT='Study mode: the full question is shown at once and there is no clock. Read and think, then Reveal Answer (or press Space) and mark Knew it (+10) or Missed it. Misses still go to the Review Pool, so you can switch to Buzzer mode and test them under pressure.';
+function applyModeUI(){
+  $('speedWrap').style.display=(mode==='study')?'none':'';
+  $('modeHint').textContent=(mode==='study')?STUDY_HINT:BUZZ_HINT;
+}
+$('mode').addEventListener('change',function(){
+  mode=this.value;this.blur();
+  try{localStorage.setItem(KEY+'-mode',mode)}catch(e){}
+  applyModeUI();stopAll();current=null;
+  $('cardMeta').textContent='Card - / -';$('clock').textContent='-';
+  $('qtext').textContent='Mode set to '+(mode==='study'?'Study':'Buzzer')+'. Tap Start Training when ready.';
+  $('answer').className='a hidden';$('buzzline').className='hidden';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;
+});
+try{var savedMode=localStorage.getItem(KEY+'-mode');if(savedMode==='study'||savedMode==='buzzer'){mode=savedMode}}catch(e){}
+$('mode').value=mode;applyModeUI();
+refreshPool();stats();
+</script>
+</html>

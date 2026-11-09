@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Abhinav - Physics Vault Science Trainer</title>
+<style>
+:root{--ink:#163447;--accent:#256b73;--accent2:#2c7754;--bad:#a33b2a;--muted:#526779;--paper:#ffffff;--bg:#eef2f4;--line:#d7e1e6}
+@media (prefers-color-scheme: dark){:root{--ink:#e8f0f3;--muted:#9db4c0;--paper:#16242e;--bg:#0d161c;--line:#2b3f4c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:20px}
+header{background:#163447;color:#fff;padding:26px;border-radius:18px}
+header h1{margin:4px 0 6px;font-size:clamp(24px,4vw,36px);line-height:1.15}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.small{font-size:13px;color:var(--muted)}
+header .small{color:#c8d8de}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+button{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 14px;background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){filter:brightness(.95)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+button.good{background:var(--accent2);border-color:var(--accent2);color:#fff}
+button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+select{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 12px;max-width:100%;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:24px}
+#card{border:2px solid var(--accent);border-radius:16px;padding:24px;min-height:230px;cursor:pointer;background:var(--paper)}
+#card .q{font-size:20px;line-height:1.65}
+#card .a{font-size:19px;background:#e7f3ed;border-left:4px solid var(--accent2);padding:14px;margin-top:16px;border-radius:6px;color:#163447}
+@media (prefers-color-scheme: dark){#card .a{color:#dff2e6;background:#1d3325}}
+#buzzline{background:#fdf3d8;border:1px solid #d9b84a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:650;color:#6b5410}
+@media (prefers-color-scheme: dark){#buzzline{color:#f0d48a;background:#33301c}}
+.tag{display:inline-block;background:#e9eff3;border-radius:20px;padding:3px 10px;font-size:12px;margin:0 6px 8px 0;color:#163447}
+#timerbar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+#timerfill{height:100%;background:var(--accent);width:100%}
+#timerfill.low{background:var(--bad)}
+.hidden{display:none!important}
+progress{width:100%;accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px;text-align:left;border-bottom:1px solid var(--line)}
+a{color:#176583}
+.foot{margin-top:16px}
+.cursor{color:var(--accent);font-weight:700}
+</style>
+<main>
+<header>
+<div class="eyebrow">Science Bee Trainer - Physics Vault</div>
+<h1>Ready to train, Abhinav?</h1>
+<div class="small">48 cards - 17 multi-clue buzzer tossups + 31 quick-recall cards. Choose a category and a mode, then tap Start Training. Study mode shows the whole question at once, with no clock. Buzzer mode reads the question out progressively, like a real tossup - buzz early for more points. Built from the Physics Science Vault question bank, audited November 2026.</div>
+</header>
+
+<section>
+<div class="row">
+<label>Category
+<select id="cat"></select></label>
+<label>Mode
+<select id="mode"><option value="buzzer" selected>Buzzer</option><option value="study">Study</option></select></label>
+<label id="speedWrap">Reading speed
+<select id="speed"><option value="300">Slow</option><option value="210" selected>Normal</option><option value="120">Fast</option></select></label>
+<button id="start" class="primary">Start Training</button>
+<button id="reviewBtn">Train Review Pool (<span id="reviewCount">0</span>)</button>
+<button id="resetStats">Reset saved stats</button>
+</div>
+<div class="stats">
+<div class="stat"><span class="small">Answered</span><b id="sAnswered">0</b></div>
+<div class="stat"><span class="small">Correct</span><b id="sCorrect">0</b></div>
+<div class="stat"><span class="small">Wrong</span><b id="sWrong">0</b></div>
+<div class="stat"><span class="small">Accuracy</span><b id="sAcc">-</b></div>
+<div class="stat"><span class="small">Score</span><b id="sScore">0</b></div>
+</div>
+<div class="small" id="modeHint" style="margin-top:10px">Space = Buzz &middot; Y = Correct &middot; N = Wrong &middot; S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.</div>
+</section>
+
+<section>
+<div class="row" style="justify-content:space-between">
+<b id="cardMeta">Card - / -</b>
+<b id="clock">30</b>
+</div>
+<div id="timerbar"><div id="timerfill"></div></div>
+<div id="buzzline" class="hidden"></div>
+<div id="card"><div class="q" id="qtext">Choose a category above, then tap Start Training.</div><div id="answer" class="hidden"></div></div>
+<div class="row" style="margin-top:14px">
+<button id="buzz" class="primary">Buzz (Space)</button>
+<button id="reveal">Reveal Answer</button>
+<button id="correct" class="good" disabled>Knew it (Y)</button>
+<button id="wrong" class="bad" disabled>Missed it (N)</button>
+<button id="skip" disabled>Skip (S)</button>
+</div>
+<progress id="prog" value="0" max="48"></progress>
+<div class="small"><span id="seenLine">0 Knew &middot; 0 Missed &middot; 0 Seen</span></div>
+</section>
+
+<section>
+<h2 style="margin-top:0">Session Stats</h2>
+<div id="sessionStats" class="small">Start a session to see stats.</div>
+<h3>Review Pool (<span id="poolN">0</span>)</h3>
+<div id="pool" class="small">No misses yet!</div>
+<div class="foot small">
+<a href="biology-vault-trainer.html">Open the Biology & Anatomy Vault Trainer</a> &middot;
+<a href="chemistry-vault-trainer.html">Open the Chemistry Vault Trainer</a> &middot;
+<a href="earth-vault-trainer.html">Open the Earth Science & Astronomy Vault Trainer</a> &middot;
+<a href="white-trainer.html">Open the White Science Trainer</a> &middot;
+<a href="red-trainer.html">Open the Red Science Trainer</a> &middot;
+<a href="index.html">Open the White Science moderator pack</a>
+</div>
+</section>
+</main>
+<script id="bank" type="application/json">[{"id": "P1-01", "round": "Classical Mechanics", "topic": "Kinematics", "tossup": false, "q": "An object is dropped from rest and falls freely for 3 seconds near the surface of the Earth, ignoring air resistance. Approximately how fast is it moving at the end of the 3 seconds? Use g of about 10 meters per second squared.", "a": "30 m/s"}, {"id": "P1-02", "round": "Classical Mechanics", "topic": "Inertia", "tossup": false, "q": "Which of the following has the greatest inertia: a falling leaf, a softball in flight, a seated student, or a rising helium balloon?", "a": "A seated student (greatest mass)"}, {"id": "P1-03", "round": "Classical Mechanics", "topic": "Rotation", "tossup": false, "q": "The rotational analog of linear force, defined as r cross F, is known as what physical quantity?", "a": "Torque"}, {"id": "P1-04", "round": "Classical Mechanics", "topic": "Oscillations", "tossup": false, "q": "The period of a simple pendulum is 2 pi times the square root of L over g. What change to the pendulum would double its period of oscillation?", "a": "Quadruple the length of the string"}, {"id": "P1-05", "round": "Classical Mechanics", "topic": "Energy", "tossup": false, "q": "A box of mass m slides down a frictionless inclined plane of height h and length L. What is the net change in its gravitational potential energy?", "a": "-mgh"}, {"id": "P1-06", "round": "Classical Mechanics", "topic": "Friction", "tossup": false, "q": "Tribologists study which physical force, described in Amontons' laws, that opposes relative motion between surfaces in contact?", "a": "Friction"}, {"id": "P1-07", "round": "Classical Mechanics", "topic": "Simple machines", "tossup": false, "q": "Which simple machine uses a grooved wheel and a rope or cable to alter the direction or magnitude of a force, with mechanical advantage equal to the number of supporting rope segments?", "a": "Pulley"}, {"id": "P1-08", "round": "Classical Mechanics", "topic": "Energy", "tossup": false, "q": "What quantity is defined as force multiplied by displacement in the direction of the force, and is measured in joules?", "a": "Work"}, {"id": "P1-T1", "round": "Classical Mechanics", "topic": "Newton's laws", "tossup": true, "q": "A quantum mechanical counterpart of this statement is known as Ehrenfest's theorem. Substituting impulse into this formula relates impulse to the change in linear momentum, and this law is applied when the net vector sum of forces on a free-body diagram is non-zero, producing a change in motion. Stated mathematically as F equals m a, name this second law of motion formulated by Isaac Newton.", "a": "Newton's second law of motion"}, {"id": "P1-T2", "round": "Classical Mechanics", "topic": "Oscillations", "tossup": true, "q": "The potential energy of these devices can be approximated using a second-order cosine expansion. The momentum of a bullet can be measured by firing into a ballistic variant of these devices, while a chaotic system is modeled by their double-jointed variety. The ideal version consists of a point mass suspended from a massless rod, swinging periodically under gravity to keep time in grandfather clocks. Name these swinging physical systems.", "a": "Pendulums"}, {"id": "P1-T3", "round": "Classical Mechanics", "topic": "Friction", "tossup": true, "q": "The Darcy-Weisbach equation calculates head loss in pipes resulting from this phenomenon. Amontons' first law states that this force is independent of apparent contact area, and multiplied by the normal force, its magnitude is governed by a coefficient represented by the Greek letter mu. Name this resistive force opposing relative sliding motion between two surfaces.", "a": "Friction"}, {"id": "P1-T4", "round": "Classical Mechanics", "topic": "Rotation", "tossup": true, "q": "This quantity is conserved due to rotational invariance according to Noether's theorem, and its time rate of change equals net torque. Figure skaters increase their rotational speed by pulling in their arms to decrease their moment of inertia, demonstrating its conservation. Defined as the product of moment of inertia and angular velocity, L equals I omega, name this rotational counterpart of linear momentum.", "a": "Angular momentum"}, {"id": "P2-01", "round": "Fluid Dynamics", "topic": "Fluid properties", "tossup": false, "q": "What term describes a fluid's intrinsic resistance to gradual deformation by shear stress, or in other words, its resistance to flow?", "a": "Viscosity"}, {"id": "P2-02", "round": "Fluid Dynamics", "topic": "Flow regimes", "tossup": false, "q": "Which dimensionless number, the ratio of inertial forces to viscous forces, is used to predict whether flow around an object will be laminar or turbulent?", "a": "Reynolds number"}, {"id": "P2-03", "round": "Fluid Dynamics", "topic": "Buoyancy", "tossup": false, "q": "According to Archimedes' principle, the buoyant force a fluid exerts on a submerged object is equal to what?", "a": "The weight of the fluid displaced by the object"}, {"id": "P2-04", "round": "Fluid Dynamics", "topic": "Forces", "tossup": false, "q": "A descending weather balloon is falling at a constant terminal velocity. In which directions do the buoyancy force and the drag force acting on it point?", "a": "Both point up (buoyancy up; drag opposes the downward motion, so also up)"}, {"id": "P2-T1", "round": "Fluid Dynamics", "topic": "Acoustics", "tossup": true, "q": "In aerodynamics, the ratio of flow velocity to the local value of this quantity is defined as the Mach number, and the choked velocity in a converging-diverging nozzle cannot exceed this speed. Its value in dry air at 20 degrees Celsius is approximately 343 meters per second, and exceeding it produces a shockwave known as a sonic boom. Name this speed at which acoustic pressure waves propagate through a medium.", "a": "Speed of sound"}, {"id": "P2-T2", "round": "Fluid Dynamics", "topic": "Flow regimes", "tossup": true, "q": "A two-dimensional layer undergoing this condition is modeled by the Blasius equation, and incompressible fluids in this state experience pressure drop described by the Hagen-Poiseuille equation. Characterized by high momentum diffusion, parallel streamlines, and a complete absence of lateral eddies, this flow regime occurs at low Reynolds numbers. Name this smooth fluid flow regime, contrasted with turbulent flow.", "a": "Laminar flow"}, {"id": "P3-01", "round": "Electricity & Magnetism", "topic": "Units", "tossup": false, "q": "What is the standard SI unit of electrical resistance, defined as volts per ampere?", "a": "Ohm"}, {"id": "P3-02", "round": "Electricity & Magnetism", "topic": "Circuits", "tossup": false, "q": "Which circuit component is specifically designed to store electrical energy in a magnetic field created by a coil of wire, with its property measured in henrys?", "a": "Inductor"}, {"id": "P3-03", "round": "Electricity & Magnetism", "topic": "Electrostatics", "tossup": false, "q": "By Coulomb's law, what happens to the electrostatic force between two point charges if each charge is tripled and the distance between them is doubled? Give the factor.", "a": "It increases by a factor of 9/4 (2.25x)"}, {"id": "P3-04", "round": "Electricity & Magnetism", "topic": "Maxwell's equations", "tossup": false, "q": "Which of Maxwell's equations explicitly states that a time-varying electric field produces a magnetic field, via the displacement current term added to Ampere's law?", "a": "Ampere-Maxwell law"}, {"id": "P3-05", "round": "Electricity & Magnetism", "topic": "Effects", "tossup": false, "q": "What physical property, discovered in quartz and Rochelle salts by Pierre and Jacques Curie, causes a material to generate an electrical voltage in response to applied mechanical stress?", "a": "Piezoelectricity"}, {"id": "P3-T1", "round": "Electricity & Magnetism", "topic": "Circuits", "tossup": true, "q": "The Miller effect describes an amplification of this property's parasitic form between the base and collector of transistors. In a parallel-plate configuration, this quantity equals dielectric constant times permittivity times plate area divided by separation distance, and it is defined as electric charge stored per unit potential difference, Q over V. Name this electrical quantity measured in farads.", "a": "Capacitance"}, {"id": "P3-T2", "round": "Electricity & Magnetism", "topic": "Materials", "tossup": true, "q": "The Woodstock of Physics in 1987 featured 51 presentations on high-temperature examples of these materials. Below a critical transition temperature, these materials exhibit zero electrical resistance and expel all internal magnetic flux lines via the Meissner effect, and they are explained at low temperatures by Cooper pair formation in BCS theory. Name these zero-resistance conductors.", "a": "Superconductors"}, {"id": "P3-T3", "round": "Electricity & Magnetism", "topic": "Induction", "tossup": true, "q": "This law's differential form sets the curl of the electric field equal to the negative time derivative of the magnetic field. The direction of the induced electromotive force it describes is given by Lenz's law, and it expresses how a changing magnetic flux induces an electric current in a closed loop. Name this fundamental law of electromagnetic induction named for an English scientist.", "a": "Faraday's law of induction"}, {"id": "P4-01", "round": "Waves, Optics & Acoustics", "topic": "Wave phenomena", "tossup": false, "q": "What physical wave phenomenon causes light waves to bend and spread out when passing through a narrow aperture or around an obstacle?", "a": "Diffraction"}, {"id": "P4-02", "round": "Waves, Optics & Acoustics", "topic": "EM spectrum", "tossup": false, "q": "Which region of the electromagnetic spectrum has wavelengths immediately shorter than visible violet light and is responsible for causing sunburns?", "a": "Ultraviolet"}, {"id": "P4-03", "round": "Waves, Optics & Acoustics", "topic": "Polarization", "tossup": false, "q": "According to Malus's law, the transmitted intensity of linearly polarized light passing through a polarizing filter rotated by angle theta equals I-zero times what function of theta?", "a": "cos squared theta (I = I0 cos^2 theta)"}, {"id": "P4-04", "round": "Waves, Optics & Acoustics", "topic": "Optics", "tossup": false, "q": "What optical defect occurs when a spherical lens fails to focus parallel light rays at a single focal point, because edge rays focus closer to the lens than central rays?", "a": "Spherical aberration"}, {"id": "P4-T1", "round": "Waves, Optics & Acoustics", "topic": "Wave phenomena", "tossup": true, "q": "The Rossiter-McLaughlin effect describes an anomalous shift in this phenomenon during planetary transits across rotating stars. Christoph Buys Ballot famously tested this phenomenon using horn players on a moving train. Explaining the apparent change in frequency of a wave for an observer moving relative to its source, name this acoustic and optical shift responsible for redshifting receding galaxies.", "a": "Doppler effect"}, {"id": "P4-T2", "round": "Waves, Optics & Acoustics", "topic": "Wave phenomena", "tossup": true, "q": "Thomas Young's 1801 double-slit experiment demonstrated the wave nature of light using this phenomenon. It occurs when two coherent wave trains overlap, combining their amplitudes to create alternating bright fringes of reinforcement and dark fringes of cancellation. Name this wave phenomenon divided into constructive and destructive types.", "a": "Wave interference"}, {"id": "P5-01", "round": "Thermodynamics & Heat", "topic": "Heat transfer", "tossup": false, "q": "What mode of heat transfer occurs through direct physical contact between solid bodies without bulk movement of the medium, and is modeled by Fourier's law?", "a": "Conduction"}, {"id": "P5-02", "round": "Thermodynamics & Heat", "topic": "Laws", "tossup": false, "q": "Which thermodynamic law asserts that heat cannot flow spontaneously from a colder body to a hotter body and that the total entropy of an isolated system must increase over time?", "a": "Second law of thermodynamics"}, {"id": "P5-T1", "round": "Thermodynamics & Heat", "topic": "Gas equations", "tossup": true, "q": "Parameters a and b in this equation account for intermolecular attractive forces and finite molecular volume, correcting the ideal gas law. Its isotherms display a critical point resolved by Maxwell's equal-area rule, and it was formulated by a Dutch physicist who also names weak intermolecular dispersion forces. Name this non-ideal gas equation of state.", "a": "Van der Waals equation"}, {"id": "P5-T2", "round": "Thermodynamics & Heat", "topic": "Processes", "tossup": true, "q": "Processes with this property occur with zero heat transfer, so the change in internal energy equals the work done on or by the system. Reversible processes with this property are also isentropic, and rapid expansions and compressions are often approximately modeled with this property. Name this thermodynamic property describing processes with no heat exchange with the surroundings.", "a": "Adiabatic process"}, {"id": "P6-01", "round": "Quantum & Particle Physics", "topic": "Quantum phenomena", "tossup": false, "q": "Albert Einstein was awarded the 1921 Nobel Prize in Physics for explaining which quantum phenomenon, in which light shining on a metal surface ejects electrons?", "a": "Photoelectric effect"}, {"id": "P6-02", "round": "Quantum & Particle Physics", "topic": "Particles", "tossup": false, "q": "Which subatomic gauge bosons carry the strong nuclear force, binding quarks together inside hadrons?", "a": "Gluons"}, {"id": "P6-03", "round": "Quantum & Particle Physics", "topic": "Quantum principles", "tossup": false, "q": "What quantum principle, formulated by Wolfgang Pauli, states that no two identical fermions can occupy the same quantum state simultaneously?", "a": "Pauli exclusion principle"}, {"id": "P6-T1", "round": "Quantum & Particle Physics", "topic": "Quantum phenomena", "tossup": true, "q": "George Gamow used this quantum phenomenon to explain nuclear alpha decay, showing that alpha particles can escape the nuclear potential well without possessing classical threshold energy. It also underpins field emission in Zener diodes and scanning tunneling microscopy. Name this quantum mechanical effect in which a particle penetrates a classically forbidden potential energy barrier.", "a": "Quantum tunneling"}, {"id": "P6-T2", "round": "Quantum & Particle Physics", "topic": "Particles", "tossup": true, "q": "Discovered at CERN's Large Hadron Collider in 2012, this scalar boson has zero electric charge, zero spin, and positive parity. Its associated field gives mass to elementary particles via spontaneous electroweak symmetry breaking, and it is popularly dubbed the God Particle. Name this fundamental particle named for a Scottish theoretical physicist.", "a": "Higgs boson"}, {"id": "P7-01", "round": "Relativity & Astrophysics", "topic": "Relativity", "tossup": false, "q": "In Einstein's equation E equals m c squared, what physical constant is represented by the letter c?", "a": "Speed of light in a vacuum"}, {"id": "P7-02", "round": "Relativity & Astrophysics", "topic": "Black holes", "tossup": false, "q": "What boundary surrounding a black hole, defined by the Schwarzschild radius, represents the threshold beyond which nothing, not even light, can escape?", "a": "Event horizon"}, {"id": "P7-03", "round": "Relativity & Astrophysics", "topic": "Cosmology", "tossup": false, "q": "What electromagnetic radiation, discovered by Arno Penzias and Robert Wilson in 1965, fills the universe with a 2.7 kelvin blackbody spectrum left over from the Big Bang?", "a": "Cosmic microwave background radiation (CMB)"}, {"id": "P7-T1", "round": "Relativity & Astrophysics", "topic": "Relativity", "tossup": true, "q": "Arthur Eddington led a 1919 eclipse expedition to Sobral and Principe to test this theory by observing the gravitational bending of starlight around the Sun. Its central field equations set spacetime curvature equal to the stress-energy tensor, and incorporating the equivalence principle, it describes gravity as geometric curvature. Name this 1915 theory formulated by Albert Einstein.", "a": "General relativity"}, {"id": "P8-01", "round": "Constants, Units & History", "topic": "Constants", "tossup": false, "q": "What constant, equal to approximately 6.022 times 10 to the 23rd per mole, defines the number of constituent particles in one mole of a substance?", "a": "Avogadro's number"}, {"id": "P8-02", "round": "Constants, Units & History", "topic": "Experimental history", "tossup": false, "q": "Which scientist measured the universal gravitational constant G in 1798 using a sensitive torsion balance experiment with lead spheres?", "a": "Henry Cavendish"}, {"id": "P8-T1", "round": "Constants, Units & History", "topic": "Experimental history", "tossup": true, "q": "This scientist names a charged-particle collection vessel called his namesake cup. He discovered that a magnetic field rotates the polarization plane of light in his namesake effect, and he formulated the law stating that electromotive force around a circuit equals the negative time rate of change of magnetic flux. Name this English experimentalist who formulated the laws of electrolysis and electromagnetic induction.", "a": "Michael Faraday"}]</script>
+<script>
+'use strict';
+var BANK=JSON.parse(document.getElementById('bank').textContent);
+var SETNAME='physicsVault';
+var KEY='abhinav-science-physics-vault-trainer-v1';
+var store={}; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}
+var queue=[],idx=-1,current=null,revealed=false,buzzed=false,readerDone=false;
+var words=[],wordIdx=0,reader=null,timer=null,timeLeft=30,buzzPct=0,lastPts=0;
+var mode='buzzer';
+var session={answered:0,correct:0,wrong:0,skipped:0,score:0};
+var $=function(id){return document.getElementById(id)};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+function cats(){
+  var seen=[],map={};
+  BANK.forEach(function(c){ if(!map[c.round]){map[c.round]=0;seen.push(c.round)} map[c.round]++ });
+  var out=[{name:'All cards',n:BANK.length,fn:function(c){return true}}];
+  seen.forEach(function(r){ out.push({name:r,n:map[r],fn:(function(rr){return function(c){return c.round===rr}})(r)}) });
+  out.push({name:'Buzzer tossups only',n:BANK.filter(function(c){return c.tossup}).length,fn:function(c){return !!c.tossup}});
+  out.push({name:'Quick recall only',n:BANK.filter(function(c){return !c.tossup}).length,fn:function(c){return !c.tossup}});
+  return out;
+}
+var CATS=cats();
+CATS.forEach(function(c,i){var o=document.createElement('option');o.value=i;o.textContent=c.name+' - '+c.n+' cards';$('cat').appendChild(o)});
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function poolIds(){return Object.keys(store).filter(function(id){return store[id]==='missed'})}
+function refreshPool(){
+  var ids=poolIds();$('reviewCount').textContent=ids.length;$('poolN').textContent=ids.length;
+  var knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  var seen=Object.keys(store).length;
+  $('seenLine').innerHTML=knew+' Knew &middot; '+ids.length+' Missed &middot; '+seen+' Seen';
+  $('prog').value=seen;
+  if(!ids.length){$('pool').textContent='No misses yet!';return}
+  var rows=ids.map(function(id){var c=BANK.filter(function(x){return x.id===id})[0];return c?('<tr><td>'+c.round+'</td><td>'+c.a+'</td></tr>'):''}).join('');
+  $('pool').innerHTML='<table>'+rows+'</table>';
+}
+function stats(){
+  $('sAnswered').textContent=session.answered;$('sCorrect').textContent=session.correct;$('sWrong').textContent=session.wrong;$('sScore').textContent=session.score;
+  $('sAcc').textContent=session.answered?Math.round(100*session.correct/session.answered)+'%':'-';
+  var overall=Object.keys(store).length, knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  $('sessionStats').innerHTML='This session: answered '+session.answered+', correct '+session.correct+', wrong '+session.wrong+', skipped '+session.skipped+', score '+session.score+(lastPts?' (last card: '+(lastPts>0?'+':'')+lastPts+')':'')+'.<br>Saved overall: '+overall+' seen, '+knew+' knew, accuracy '+(overall?Math.round(100*knew/overall)+'%':'-')+'.';
+}
+function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function stopReader(){if(reader){clearInterval(reader);reader=null}}
+function stopAll(){stopTimer();stopReader()}
+function startTimer(){
+  stopTimer();timeLeft=30;$('clock').textContent='30';$('timerfill').style.width='100%';$('timerfill').className='';
+  timer=setInterval(function(){timeLeft-=0.1;if(timeLeft<=0){timeLeft=0;$('clock').textContent='0';$('timerfill').style.width='0%';stopAll();timeout();return} $('clock').textContent=Math.ceil(timeLeft);$('timerfill').style.width=(timeLeft/30*100)+'%';if(timeLeft<=10)$('timerfill').className='low'},100);
+}
+function renderWords(){
+  var shown=words.slice(0,wordIdx).join(' ');
+  $('qtext').innerHTML=shown+(readerDone?'':' <span class="cursor">&#9612;</span>');
+}
+function startReader(){
+  stopReader();readerDone=false;
+  var pace=parseInt($('speed').value,10)||210;
+  reader=setInterval(function(){
+    wordIdx++;
+    if(wordIdx>=words.length){wordIdx=words.length;stopReader();readerDone=true;$('qtext').textContent=current.q;$('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - question complete, buzz or reveal';return}
+    renderWords();
+  },pace);
+}
+function showCard(){
+  current=queue[idx];revealed=false;buzzed=false;readerDone=false;buzzPct=0;
+  words=current.q.split(/\s+/);wordIdx=0;
+  $('buzzline').className='hidden';$('buzzline').textContent='';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round;
+  $('qtext').textContent='';
+  var ans=$('answer');ans.className='a hidden';ans.innerHTML='';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=false;
+  if(mode==='study'){readerDone=true;wordIdx=words.length;$('qtext').textContent=current.q;$('clock').textContent='Study';$('timerfill').style.width='100%';$('timerfill').className='';$('buzz').disabled=true}
+  else{$('buzz').disabled=false;startTimer();startReader()}
+  stats();
+}
+function buzzPoints(){ if(buzzPct<=33)return 15; if(buzzPct<=66)return 12; return 10 }
+function buzz(){
+  if(mode==='study')return;
+  if(!current||revealed||buzzed)return;
+  buzzed=true;stopAll();
+  buzzPct=words.length?Math.round(100*wordIdx/words.length):100;
+  $('qtext').textContent=words.slice(0,wordIdx).join(' ');
+  var bl=$('buzzline');bl.className='';bl.textContent='BUZZED at '+buzzPct+'% of the question - get it right for +'+buzzPoints()+' points (wrong = -5). Tap the card or Reveal Answer when ready.';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - BUZZED';
+  $('buzz').disabled=true;
+}
+function reveal(){
+  if(!current||revealed)return;revealed=true;stopAll();
+  $('qtext').textContent=current.q;
+  var ans=$('answer');ans.className='a';
+  ans.innerHTML='<span class="tag">'+current.topic+'</span>'+(current.tossup?'<span class="tag">Buzzer tossup</span>':'<span class="tag">Quick recall</span>')+'<br><b>Answer:</b> '+current.a;
+  $('correct').disabled=false;$('wrong').disabled=false;$('buzz').disabled=true;
+}
+function timeout(){ if(!current||revealed)return; reveal(); mark(false,true); }
+function pointsFor(knew){
+  if(mode==='study')return knew?10:0;
+  if(knew){ if(buzzed)return buzzPoints(); if(readerDone)return 10; return 5 }
+  return buzzed?-5:0;
+}
+function mark(knew,auto){
+  if(!current)return;
+  lastPts=pointsFor(knew);session.score+=lastPts;
+  store[current.id]=knew?'knew':'missed';save();
+  session.answered++; if(knew)session.correct++;else session.wrong++;
+  refreshPool();stats();
+  setTimeout(next, auto?700:150);
+}
+function next(){
+  idx++; if(idx>=queue.length){stopAll();current=null;$('cardMeta').textContent='Session complete';$('qtext').textContent='Done - every card in this run is finished. Start again or train the review pool.';$('answer').className='a hidden';$('buzzline').className='hidden';$('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;$('clock').textContent='-';return}
+  showCard();
+}
+function start(pool){
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  var sel=CATS[parseInt($('cat').value,10)];
+  var list=pool?BANK.filter(function(c){return store[c.id]==='missed'}):BANK.filter(sel.fn);
+  if(!list.length){alert('Nothing in this pool yet.');return}
+  queue=shuffle(list.slice());idx=0;session={answered:0,correct:0,wrong:0,skipped:0,score:0};lastPts=0;showCard();
+}
+$('start').onclick=function(){start(false)};
+$('reviewBtn').onclick=function(){start(true)};
+$('card').onclick=function(){if(!current||revealed)return; if(!buzzed&&!readerDone){buzz()} else {reveal()}};
+$('reveal').onclick=reveal;
+$('buzz').onclick=buzz;
+$('correct').onclick=function(){mark(true,false)};
+$('wrong').onclick=function(){mark(false,false)};
+$('skip').onclick=function(){if(!current)return;session.skipped++;stopAll();next();stats()};
+$('resetStats').onclick=function(){if(confirm('Clear saved knew/missed stats for this trainer?')){store={};save();refreshPool();stats()}};
+$('cat').addEventListener('change',function(){this.blur()});
+$('speed').addEventListener('change',function(){this.blur()});
+document.addEventListener('click',function(e){if(e.target&&e.target.tagName==='BUTTON'){e.target.blur()}});
+document.addEventListener('keydown',function(e){
+  var t=e.target&&e.target.tagName;
+  if(t==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();e.stopPropagation();if(mode==='study'){reveal()}else{buzz()}}
+  else if(e.key==='y'||e.key==='Y'){if(revealed)mark(true,false)}
+  else if(e.key==='n'||e.key==='N'){if(revealed)mark(false,false)}
+  else if(e.key==='s'||e.key==='S'){if(current&&!revealed){session.skipped++;stopAll();next();stats()}}
+},true);
+var BUZZ_HINT='Space = Buzz \u00b7 Y = Correct \u00b7 N = Wrong \u00b7 S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.';
+var STUDY_HINT='Study mode: the full question is shown at once and there is no clock. Read and think, then Reveal Answer (or press Space) and mark Knew it (+10) or Missed it. Misses still go to the Review Pool, so you can switch to Buzzer mode and test them under pressure.';
+function applyModeUI(){
+  $('speedWrap').style.display=(mode==='study')?'none':'';
+  $('modeHint').textContent=(mode==='study')?STUDY_HINT:BUZZ_HINT;
+}
+$('mode').addEventListener('change',function(){
+  mode=this.value;this.blur();
+  try{localStorage.setItem(KEY+'-mode',mode)}catch(e){}
+  applyModeUI();stopAll();current=null;
+  $('cardMeta').textContent='Card - / -';$('clock').textContent='-';
+  $('qtext').textContent='Mode set to '+(mode==='study'?'Study':'Buzzer')+'. Tap Start Training when ready.';
+  $('answer').className='a hidden';$('buzzline').className='hidden';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;
+});
+try{var savedMode=localStorage.getItem(KEY+'-mode');if(savedMode==='study'||savedMode==='buzzer'){mode=savedMode}}catch(e){}
+$('mode').value=mode;applyModeUI();
+refreshPool();stats();
+</script>
+</html>

@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Abhinav - Chemistry Vault Science Trainer</title>
+<style>
+:root{--ink:#163447;--accent:#256b73;--accent2:#2c7754;--bad:#a33b2a;--muted:#526779;--paper:#ffffff;--bg:#eef2f4;--line:#d7e1e6}
+@media (prefers-color-scheme: dark){:root{--ink:#e8f0f3;--muted:#9db4c0;--paper:#16242e;--bg:#0d161c;--line:#2b3f4c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:20px}
+header{background:#163447;color:#fff;padding:26px;border-radius:18px}
+header h1{margin:4px 0 6px;font-size:clamp(24px,4vw,36px);line-height:1.15}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.small{font-size:13px;color:var(--muted)}
+header .small{color:#c8d8de}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+button{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 14px;background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){filter:brightness(.95)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+button.good{background:var(--accent2);border-color:var(--accent2);color:#fff}
+button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+select{font:inherit;border:1px solid #a8bbc5;border-radius:8px;padding:9px 12px;max-width:100%;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat b{display:block;font-size:24px}
+#card{border:2px solid var(--accent);border-radius:16px;padding:24px;min-height:230px;cursor:pointer;background:var(--paper)}
+#card .q{font-size:20px;line-height:1.65}
+#card .a{font-size:19px;background:#e7f3ed;border-left:4px solid var(--accent2);padding:14px;margin-top:16px;border-radius:6px;color:#163447}
+@media (prefers-color-scheme: dark){#card .a{color:#dff2e6;background:#1d3325}}
+#buzzline{background:#fdf3d8;border:1px solid #d9b84a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:650;color:#6b5410}
+@media (prefers-color-scheme: dark){#buzzline{color:#f0d48a;background:#33301c}}
+.tag{display:inline-block;background:#e9eff3;border-radius:20px;padding:3px 10px;font-size:12px;margin:0 6px 8px 0;color:#163447}
+#timerbar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+#timerfill{height:100%;background:var(--accent);width:100%}
+#timerfill.low{background:var(--bad)}
+.hidden{display:none!important}
+progress{width:100%;accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px;text-align:left;border-bottom:1px solid var(--line)}
+a{color:#176583}
+.foot{margin-top:16px}
+.cursor{color:var(--accent);font-weight:700}
+</style>
+<main>
+<header>
+<div class="eyebrow">Science Bee Trainer - Chemistry Vault</div>
+<h1>Ready to train, Abhinav?</h1>
+<div class="small">43 cards - 9 multi-clue buzzer tossups + 34 quick-recall cards. Choose a category and a mode, then tap Start Training. Study mode shows the whole question at once, with no clock. Buzzer mode reads the question out progressively, like a real tossup - buzz early for more points. Built from the Chemistry Science Vault question bank, audited November 2026.</div>
+</header>
+
+<section>
+<div class="row">
+<label>Category
+<select id="cat"></select></label>
+<label>Mode
+<select id="mode"><option value="buzzer" selected>Buzzer</option><option value="study">Study</option></select></label>
+<label id="speedWrap">Reading speed
+<select id="speed"><option value="300">Slow</option><option value="210" selected>Normal</option><option value="120">Fast</option></select></label>
+<button id="start" class="primary">Start Training</button>
+<button id="reviewBtn">Train Review Pool (<span id="reviewCount">0</span>)</button>
+<button id="resetStats">Reset saved stats</button>
+</div>
+<div class="stats">
+<div class="stat"><span class="small">Answered</span><b id="sAnswered">0</b></div>
+<div class="stat"><span class="small">Correct</span><b id="sCorrect">0</b></div>
+<div class="stat"><span class="small">Wrong</span><b id="sWrong">0</b></div>
+<div class="stat"><span class="small">Accuracy</span><b id="sAcc">-</b></div>
+<div class="stat"><span class="small">Score</span><b id="sScore">0</b></div>
+</div>
+<div class="small" id="modeHint" style="margin-top:10px">Space = Buzz &middot; Y = Correct &middot; N = Wrong &middot; S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.</div>
+</section>
+
+<section>
+<div class="row" style="justify-content:space-between">
+<b id="cardMeta">Card - / -</b>
+<b id="clock">30</b>
+</div>
+<div id="timerbar"><div id="timerfill"></div></div>
+<div id="buzzline" class="hidden"></div>
+<div id="card"><div class="q" id="qtext">Choose a category above, then tap Start Training.</div><div id="answer" class="hidden"></div></div>
+<div class="row" style="margin-top:14px">
+<button id="buzz" class="primary">Buzz (Space)</button>
+<button id="reveal">Reveal Answer</button>
+<button id="correct" class="good" disabled>Knew it (Y)</button>
+<button id="wrong" class="bad" disabled>Missed it (N)</button>
+<button id="skip" disabled>Skip (S)</button>
+</div>
+<progress id="prog" value="0" max="43"></progress>
+<div class="small"><span id="seenLine">0 Knew &middot; 0 Missed &middot; 0 Seen</span></div>
+</section>
+
+<section>
+<h2 style="margin-top:0">Session Stats</h2>
+<div id="sessionStats" class="small">Start a session to see stats.</div>
+<h3>Review Pool (<span id="poolN">0</span>)</h3>
+<div id="pool" class="small">No misses yet!</div>
+<div class="foot small">
+<a href="biology-vault-trainer.html">Open the Biology & Anatomy Vault Trainer</a> &middot;
+<a href="physics-vault-trainer.html">Open the Physics Vault Trainer</a> &middot;
+<a href="earth-vault-trainer.html">Open the Earth Science & Astronomy Vault Trainer</a> &middot;
+<a href="white-trainer.html">Open the White Science Trainer</a> &middot;
+<a href="red-trainer.html">Open the Red Science Trainer</a> &middot;
+<a href="index.html">Open the White Science moderator pack</a>
+</div>
+</section>
+</main>
+<script id="bank" type="application/json">[{"id": "C1-01", "round": "Atomic Structure & Periodic Table", "topic": "Atomic theory", "tossup": false, "q": "Which scientist is credited as the father of atomic theory for proposing that elements consist of indivisible spherical atoms with fixed mass ratios, and who formulated the law of multiple proportions?", "a": "John Dalton"}, {"id": "C1-02", "round": "Atomic Structure & Periodic Table", "topic": "Atomic models", "tossup": false, "q": "The plum pudding model of the atom was proposed by which physicist following his discovery of the electron with cathode ray tubes?", "a": "J.J. Thomson"}, {"id": "C1-03", "round": "Atomic Structure & Periodic Table", "topic": "Atomic models", "tossup": false, "q": "Which experiment, performed by Geiger and Marsden, disproved the plum pudding model by showing that the atom's positive charge and mass are concentrated in a dense central nucleus?", "a": "Rutherford gold foil experiment"}, {"id": "C1-04", "round": "Atomic Structure & Periodic Table", "topic": "Subatomic particles", "tossup": false, "q": "Which particle has a mass of approximately 1 atomic mass unit and carries zero net electric charge?", "a": "Neutron"}, {"id": "C1-05", "round": "Atomic Structure & Periodic Table", "topic": "Periodic trends", "tossup": false, "q": "Which halogen has the highest electronegativity of any element on the Pauling scale, at 3.98?", "a": "Fluorine"}, {"id": "C1-06", "round": "Atomic Structure & Periodic Table", "topic": "Periodic table", "tossup": false, "q": "Potassium and sodium belong to which group on the periodic table, whose members each have one valence electron and react vigorously with water?", "a": "Alkali metals"}, {"id": "C1-07", "round": "Atomic Structure & Periodic Table", "topic": "Atmosphere", "tossup": false, "q": "Which noble gas makes up the third most abundant constituent of Earth's dry atmosphere, at about 0.93 percent, behind nitrogen and oxygen?", "a": "Argon"}, {"id": "C1-08", "round": "Atomic Structure & Periodic Table", "topic": "Electron shells", "tossup": false, "q": "What is the maximum number of electrons that can occupy the fourth principal energy level, n equals 4, given the shell capacity formula 2n squared?", "a": "32"}, {"id": "C1-09", "round": "Atomic Structure & Periodic Table", "topic": "Elements", "tossup": false, "q": "Which Period 6 post-transition metal with atomic number 83 sits between lead and polonium and is used in anti-diarrheal remedies like Pepto-Bismol?", "a": "Bismuth"}, {"id": "C1-10", "round": "Atomic Structure & Periodic Table", "topic": "Elements", "tossup": false, "q": "Which transition metal with atomic number 27 derives its name from a German word for a mischievous goblin and forms the central metal core of vitamin B12?", "a": "Cobalt"}, {"id": "C1-T1", "round": "Atomic Structure & Periodic Table", "topic": "Elements", "tossup": true, "q": "Cattierite is a mineral structurally similar to pyrite, but it replaces iron with this element. This metal was considered for salted bombs designed to enhance nuclear fallout, and red blood cell formation relies on vitamin B12, which contains this metal at its center. Miners named this metal after mischievous earth spirits because of smelting problems, and it sits between iron and nickel on the periodic table with atomic number 27. Name this element.", "a": "Cobalt (Co)"}, {"id": "C1-T2", "round": "Atomic Structure & Periodic Table", "topic": "Cryogenics", "tossup": true, "q": "Yttrium barium copper oxide was the first material discovered to exhibit high-temperature superconductivity above the boiling point of this substance, at 92 kelvin. Handling this substance requires vacuum-insulated Dewar flasks to prevent rapid boiling at its standard boiling point of 77 kelvin, and it is widely used in dermatological cryotherapy and cryogenic preservation of biological specimens. Name this extremely cold liquefied gas that makes up roughly 78 percent of Earth's atmosphere in its diatomic gaseous form.", "a": "Liquid nitrogen"}, {"id": "C1-T3", "round": "Atomic Structure & Periodic Table", "topic": "Radioactivity", "tossup": true, "q": "In 1896, Henri Becquerel discovered natural radioactivity while experimenting with phosphorescent salts of this element wrapped in black paper. Martin Heinrich Klaproth discovered this element in 1789 and named it after a recently discovered planet, and its isotope with mass number 235 undergoes induced nuclear fission when struck by thermal neutrons in nuclear reactors. Name this heavy actinide element with atomic number 92 and symbol U.", "a": "Uranium (U)"}, {"id": "C2-01", "round": "Bonding, Geometry & States of Matter", "topic": "Bonding", "tossup": false, "q": "A compound formed by the complete transfer of valence electrons from a metal atom to a nonmetal atom contains which type of chemical bond?", "a": "Ionic bond"}, {"id": "C2-02", "round": "Bonding, Geometry & States of Matter", "topic": "Bonding", "tossup": false, "q": "Sigma bonds and pi bonds are specific orbital-overlap configurations belonging to which major category of chemical bonding, in which atoms share electrons?", "a": "Covalent bonds"}, {"id": "C2-03", "round": "Bonding, Geometry & States of Matter", "topic": "VSEPR geometry", "tossup": false, "q": "According to VSEPR theory, a molecule with 5 bonding electron groups and 1 lone pair around its central atom, AX5E such as BrF5, adopts which molecular geometry?", "a": "Square pyramidal"}, {"id": "C2-04", "round": "Bonding, Geometry & States of Matter", "topic": "Bonding", "tossup": false, "q": "Which rule states that main-group atoms tend to combine in such a way that each atom has eight electrons in its valence shell?", "a": "Octet rule"}, {"id": "C2-05", "round": "Bonding, Geometry & States of Matter", "topic": "Bonding", "tossup": false, "q": "Molecules of main-group elements that accommodate more than eight valence electrons around their central atom, such as PF5 or SF6, are described by what property?", "a": "Hypervalence (expanded octet)"}, {"id": "C2-06", "round": "Bonding, Geometry & States of Matter", "topic": "Phase changes", "tossup": false, "q": "What phase transition describes a substance changing directly from a solid state into a gaseous state without passing through a liquid phase, as dry ice does?", "a": "Sublimation"}, {"id": "C2-07", "round": "Bonding, Geometry & States of Matter", "topic": "States of matter", "tossup": false, "q": "Ionizing a superheated gaseous material causes it to enter what fourth state of matter consisting of free ions and unbound electrons, found in lightning and stars?", "a": "Plasma"}, {"id": "C2-08", "round": "Bonding, Geometry & States of Matter", "topic": "Solutions", "tossup": false, "q": "What term describes a mixture of two or more liquids that boils at a constant temperature and composition, resisting separation by simple fractional distillation, like 95.6 percent ethanol in water?", "a": "Azeotrope"}, {"id": "C2-T1", "round": "Bonding, Geometry & States of Matter", "topic": "VSEPR geometry", "tossup": true, "q": "In the AXE method of molecular geometry, this shape corresponds to X equals 4 and E equals 2 around a central atom. Alfred Werner utilized the cis and trans isomers of the chemotherapy drug cisplatin to demonstrate that d8 transition metal complexes adopt this flat structure. Name this two-dimensional molecular geometry in which four peripheral atoms are bonded to a central atom at 90-degree angles in a single plane.", "a": "Square planar"}, {"id": "C2-T2", "round": "Bonding, Geometry & States of Matter", "topic": "Bonding", "tossup": true, "q": "The three-center two-electron banana bond variant of these structures is used to model diborane. According to Bredt's rule, the pi type of these interactions cannot form at the bridgehead of a small bridged ring system, while dative or coordinate types occur when a Lewis base donates both electrons to a Lewis acid. Name these chemical attractions formed when atoms share or transfer valence electrons, which come in covalent, ionic, and metallic varieties.", "a": "Chemical bonds"}, {"id": "C3-01", "round": "Physical Chemistry & Gas Laws", "topic": "Gas laws", "tossup": false, "q": "Which gas law states that at constant temperature and quantity of gas, the volume of a gas is inversely proportional to its pressure?", "a": "Boyle's law"}, {"id": "C3-03", "round": "Physical Chemistry & Gas Laws", "topic": "Gas laws", "tossup": false, "q": "According to Graham's law, the rate of effusion or diffusion of a gas is inversely proportional to the square root of which physical property?", "a": "Molecular weight (molar mass)"}, {"id": "C3-04", "round": "Physical Chemistry & Gas Laws", "topic": "Kinetics", "tossup": false, "q": "To determine whether experimental concentration data fits a first-order reaction, what plot will yield a straight line with slope equal to negative k?", "a": "ln[A] versus time"}, {"id": "C3-05", "round": "Physical Chemistry & Gas Laws", "topic": "Equilibrium", "tossup": false, "q": "Which principle states that if a dynamic equilibrium is disturbed by changing conditions such as pressure, temperature, or concentration, the position of equilibrium shifts to counteract the change?", "a": "Le Chatelier's principle"}, {"id": "C3-T1", "round": "Physical Chemistry & Gas Laws", "topic": "Kinetics", "tossup": true, "q": "Briggs and Haldane provided a steady-state approximation derivation for a foundational equation in this field named for Michaelis and Menten. Replacing hydrogen with deuterium alters reaction speed in a phenomenon known as the kinetic isotope effect, and reaction outcomes can be classified as giving either a thermodynamic product or a product governed by this branch of physical chemistry. Name this study of reaction rates and mechanisms, whose name shares its origin with the form of energy associated with objects in motion.", "a": "Chemical kinetics"}, {"id": "C4-01", "round": "Acids, Bases & Electrochemistry", "topic": "Acid-base theory", "tossup": false, "q": "Which acid-base model defines an acid specifically as a substance that acts as an electron-pair acceptor?", "a": "Lewis model"}, {"id": "C4-02", "round": "Acids, Bases & Electrochemistry", "topic": "Buffers", "tossup": false, "q": "What equation is used to calculate the pH of a buffer solution from the pKa and the log ratio of conjugate base to weak acid concentration?", "a": "Henderson-Hasselbalch equation"}, {"id": "C4-03", "round": "Acids, Bases & Electrochemistry", "topic": "Electrochemistry", "tossup": false, "q": "In an electrochemical cell, oxidation strictly occurs at which electrode? Remember: an ox, red cat.", "a": "Anode"}, {"id": "C4-04", "round": "Acids, Bases & Electrochemistry", "topic": "Electrochemistry", "tossup": false, "q": "Which electrochemical equation determines the reduction potential of a cell under non-standard conditions using the standard cell potential, temperature, and reaction quotient Q?", "a": "Nernst equation"}, {"id": "C4-05", "round": "Acids, Bases & Electrochemistry", "topic": "Industrial processes", "tossup": false, "q": "What industrial electrochemical process electrolyzes alumina dissolved in molten cryolite to extract pure aluminum metal?", "a": "Hall-Heroult process"}, {"id": "C4-T1", "round": "Acids, Bases & Electrochemistry", "topic": "Acid-base theory", "tossup": true, "q": "Phenolphthalein turns from colorless to bright pink at the equivalence point when titrating a weak acid with a strong base using one of these substances. Hydrion paper blotted with bromothymol blue or methyl orange belongs to this functional group of chemical reagents, as do litmus paper and cabbage juice. Name these substances that change color in response to changes in pH.", "a": "pH indicators (acid-base indicators)"}, {"id": "C5-01", "round": "Organic Chemistry", "topic": "Foundations", "tossup": false, "q": "Organic chemistry principally focuses on the chemical structure, properties, and reactions of compounds containing which element, whose tetravalency lets it form chains and rings?", "a": "Carbon"}, {"id": "C5-02", "round": "Organic Chemistry", "topic": "Hydrocarbons", "tossup": false, "q": "Which general chemical formula, C n H 2n, describes acyclic alkenes containing one carbon-carbon double bond?", "a": "CnH2n"}, {"id": "C5-03", "round": "Organic Chemistry", "topic": "Functional groups", "tossup": false, "q": "Which functional group consists of two carbon chains linked to a single central oxygen atom, R-O-R prime, as in diethyl ether and THF?", "a": "Ether"}, {"id": "C5-04", "round": "Organic Chemistry", "topic": "Aromaticity", "tossup": false, "q": "According to Huckel's rule, a cyclic, planar, fully conjugated molecule exhibits aromaticity if it contains how many delocalized pi electrons, in terms of n?", "a": "4n + 2"}, {"id": "C5-05", "round": "Organic Chemistry", "topic": "Reactions", "tossup": false, "q": "Which name is given to the pericyclic [4+2] cycloaddition reaction between a conjugated diene and a substituted alkene, a dienophile, to form a cyclohexene ring?", "a": "Diels-Alder reaction"}, {"id": "C5-T1", "round": "Organic Chemistry", "topic": "Functional groups", "tossup": true, "q": "Ozonolysis splits these functional groups into carboxylic acids or carbonyl compounds, and geometric isomerism around them is designated using the German prefixes Entgegen and Zusammen, E and Z. Acyclic examples possess the general formula C n H 2n, and the simplest example is ethylene, or ethene. Name this organic functional group characterized by a carbon-carbon double bond.", "a": "Alkenes (olefins)"}, {"id": "C6-01", "round": "Analytical Chemistry & Lab", "topic": "Lab equipment", "tossup": false, "q": "Which laboratory glassware consists of a long, graduated glass tube with a stopcock at the bottom, commonly used to deliver precise liquid volumes during acid-base titrations?", "a": "Burette"}, {"id": "C6-02", "round": "Analytical Chemistry & Lab", "topic": "Techniques", "tossup": false, "q": "Which analytical technique separates chemical analytes based on their mass-to-charge ratio, m over z?", "a": "Mass spectrometry"}, {"id": "C6-T1", "round": "Analytical Chemistry & Lab", "topic": "Lab equipment", "tossup": true, "q": "In 1926, Theodor Svedberg won the Nobel Prize in Chemistry for investigating colloids using an ultra version of this laboratory device. Gas-phase varieties are utilized in nuclear fuel processing to enrich uranium-235 from uranium hexafluoride, and in clinical medicine it rapidly isolates blood cells from plasma by exploiting differences in density. Name this laboratory machine that spins sample tubes at high rotational speeds to separate liquid mixtures.", "a": "Centrifuge (accept ultracentrifuge)"}]</script>
+<script>
+'use strict';
+var BANK=JSON.parse(document.getElementById('bank').textContent);
+var SETNAME='chemistryVault';
+var KEY='abhinav-science-chemistry-vault-trainer-v1';
+var store={}; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}
+var queue=[],idx=-1,current=null,revealed=false,buzzed=false,readerDone=false;
+var words=[],wordIdx=0,reader=null,timer=null,timeLeft=30,buzzPct=0,lastPts=0;
+var mode='buzzer';
+var session={answered:0,correct:0,wrong:0,skipped:0,score:0};
+var $=function(id){return document.getElementById(id)};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+function cats(){
+  var seen=[],map={};
+  BANK.forEach(function(c){ if(!map[c.round]){map[c.round]=0;seen.push(c.round)} map[c.round]++ });
+  var out=[{name:'All cards',n:BANK.length,fn:function(c){return true}}];
+  seen.forEach(function(r){ out.push({name:r,n:map[r],fn:(function(rr){return function(c){return c.round===rr}})(r)}) });
+  out.push({name:'Buzzer tossups only',n:BANK.filter(function(c){return c.tossup}).length,fn:function(c){return !!c.tossup}});
+  out.push({name:'Quick recall only',n:BANK.filter(function(c){return !c.tossup}).length,fn:function(c){return !c.tossup}});
+  return out;
+}
+var CATS=cats();
+CATS.forEach(function(c,i){var o=document.createElement('option');o.value=i;o.textContent=c.name+' - '+c.n+' cards';$('cat').appendChild(o)});
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function poolIds(){return Object.keys(store).filter(function(id){return store[id]==='missed'})}
+function refreshPool(){
+  var ids=poolIds();$('reviewCount').textContent=ids.length;$('poolN').textContent=ids.length;
+  var knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  var seen=Object.keys(store).length;
+  $('seenLine').innerHTML=knew+' Knew &middot; '+ids.length+' Missed &middot; '+seen+' Seen';
+  $('prog').value=seen;
+  if(!ids.length){$('pool').textContent='No misses yet!';return}
+  var rows=ids.map(function(id){var c=BANK.filter(function(x){return x.id===id})[0];return c?('<tr><td>'+c.round+'</td><td>'+c.a+'</td></tr>'):''}).join('');
+  $('pool').innerHTML='<table>'+rows+'</table>';
+}
+function stats(){
+  $('sAnswered').textContent=session.answered;$('sCorrect').textContent=session.correct;$('sWrong').textContent=session.wrong;$('sScore').textContent=session.score;
+  $('sAcc').textContent=session.answered?Math.round(100*session.correct/session.answered)+'%':'-';
+  var overall=Object.keys(store).length, knew=Object.keys(store).filter(function(id){return store[id]==='knew'}).length;
+  $('sessionStats').innerHTML='This session: answered '+session.answered+', correct '+session.correct+', wrong '+session.wrong+', skipped '+session.skipped+', score '+session.score+(lastPts?' (last card: '+(lastPts>0?'+':'')+lastPts+')':'')+'.<br>Saved overall: '+overall+' seen, '+knew+' knew, accuracy '+(overall?Math.round(100*knew/overall)+'%':'-')+'.';
+}
+function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+function stopReader(){if(reader){clearInterval(reader);reader=null}}
+function stopAll(){stopTimer();stopReader()}
+function startTimer(){
+  stopTimer();timeLeft=30;$('clock').textContent='30';$('timerfill').style.width='100%';$('timerfill').className='';
+  timer=setInterval(function(){timeLeft-=0.1;if(timeLeft<=0){timeLeft=0;$('clock').textContent='0';$('timerfill').style.width='0%';stopAll();timeout();return} $('clock').textContent=Math.ceil(timeLeft);$('timerfill').style.width=(timeLeft/30*100)+'%';if(timeLeft<=10)$('timerfill').className='low'},100);
+}
+function renderWords(){
+  var shown=words.slice(0,wordIdx).join(' ');
+  $('qtext').innerHTML=shown+(readerDone?'':' <span class="cursor">&#9612;</span>');
+}
+function startReader(){
+  stopReader();readerDone=false;
+  var pace=parseInt($('speed').value,10)||210;
+  reader=setInterval(function(){
+    wordIdx++;
+    if(wordIdx>=words.length){wordIdx=words.length;stopReader();readerDone=true;$('qtext').textContent=current.q;$('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - question complete, buzz or reveal';return}
+    renderWords();
+  },pace);
+}
+function showCard(){
+  current=queue[idx];revealed=false;buzzed=false;readerDone=false;buzzPct=0;
+  words=current.q.split(/\s+/);wordIdx=0;
+  $('buzzline').className='hidden';$('buzzline').textContent='';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round;
+  $('qtext').textContent='';
+  var ans=$('answer');ans.className='a hidden';ans.innerHTML='';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=false;
+  if(mode==='study'){readerDone=true;wordIdx=words.length;$('qtext').textContent=current.q;$('clock').textContent='Study';$('timerfill').style.width='100%';$('timerfill').className='';$('buzz').disabled=true}
+  else{$('buzz').disabled=false;startTimer();startReader()}
+  stats();
+}
+function buzzPoints(){ if(buzzPct<=33)return 15; if(buzzPct<=66)return 12; return 10 }
+function buzz(){
+  if(mode==='study')return;
+  if(!current||revealed||buzzed)return;
+  buzzed=true;stopAll();
+  buzzPct=words.length?Math.round(100*wordIdx/words.length):100;
+  $('qtext').textContent=words.slice(0,wordIdx).join(' ');
+  var bl=$('buzzline');bl.className='';bl.textContent='BUZZED at '+buzzPct+'% of the question - get it right for +'+buzzPoints()+' points (wrong = -5). Tap the card or Reveal Answer when ready.';
+  $('cardMeta').textContent='Card '+(idx+1)+' / '+queue.length+' - '+current.round+' - BUZZED';
+  $('buzz').disabled=true;
+}
+function reveal(){
+  if(!current||revealed)return;revealed=true;stopAll();
+  $('qtext').textContent=current.q;
+  var ans=$('answer');ans.className='a';
+  ans.innerHTML='<span class="tag">'+current.topic+'</span>'+(current.tossup?'<span class="tag">Buzzer tossup</span>':'<span class="tag">Quick recall</span>')+'<br><b>Answer:</b> '+current.a;
+  $('correct').disabled=false;$('wrong').disabled=false;$('buzz').disabled=true;
+}
+function timeout(){ if(!current||revealed)return; reveal(); mark(false,true); }
+function pointsFor(knew){
+  if(mode==='study')return knew?10:0;
+  if(knew){ if(buzzed)return buzzPoints(); if(readerDone)return 10; return 5 }
+  return buzzed?-5:0;
+}
+function mark(knew,auto){
+  if(!current)return;
+  lastPts=pointsFor(knew);session.score+=lastPts;
+  store[current.id]=knew?'knew':'missed';save();
+  session.answered++; if(knew)session.correct++;else session.wrong++;
+  refreshPool();stats();
+  setTimeout(next, auto?700:150);
+}
+function next(){
+  idx++; if(idx>=queue.length){stopAll();current=null;$('cardMeta').textContent='Session complete';$('qtext').textContent='Done - every card in this run is finished. Start again or train the review pool.';$('answer').className='a hidden';$('buzzline').className='hidden';$('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;$('clock').textContent='-';return}
+  showCard();
+}
+function start(pool){
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  var sel=CATS[parseInt($('cat').value,10)];
+  var list=pool?BANK.filter(function(c){return store[c.id]==='missed'}):BANK.filter(sel.fn);
+  if(!list.length){alert('Nothing in this pool yet.');return}
+  queue=shuffle(list.slice());idx=0;session={answered:0,correct:0,wrong:0,skipped:0,score:0};lastPts=0;showCard();
+}
+$('start').onclick=function(){start(false)};
+$('reviewBtn').onclick=function(){start(true)};
+$('card').onclick=function(){if(!current||revealed)return; if(!buzzed&&!readerDone){buzz()} else {reveal()}};
+$('reveal').onclick=reveal;
+$('buzz').onclick=buzz;
+$('correct').onclick=function(){mark(true,false)};
+$('wrong').onclick=function(){mark(false,false)};
+$('skip').onclick=function(){if(!current)return;session.skipped++;stopAll();next();stats()};
+$('resetStats').onclick=function(){if(confirm('Clear saved knew/missed stats for this trainer?')){store={};save();refreshPool();stats()}};
+$('cat').addEventListener('change',function(){this.blur()});
+$('speed').addEventListener('change',function(){this.blur()});
+document.addEventListener('click',function(e){if(e.target&&e.target.tagName==='BUTTON'){e.target.blur()}});
+document.addEventListener('keydown',function(e){
+  var t=e.target&&e.target.tagName;
+  if(t==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();e.stopPropagation();if(mode==='study'){reveal()}else{buzz()}}
+  else if(e.key==='y'||e.key==='Y'){if(revealed)mark(true,false)}
+  else if(e.key==='n'||e.key==='N'){if(revealed)mark(false,false)}
+  else if(e.key==='s'||e.key==='S'){if(current&&!revealed){session.skipped++;stopAll();next();stats()}}
+},true);
+var BUZZ_HINT='Space = Buzz \u00b7 Y = Correct \u00b7 N = Wrong \u00b7 S = Skip. Buzzing stops the reading and the clock. Scoring: buzz in the first third and get it right = 15, first two-thirds = 12, later buzz = 10, hear the whole question = 10, reveal early without buzzing = 5. A wrong answer after a buzz = -5.';
+var STUDY_HINT='Study mode: the full question is shown at once and there is no clock. Read and think, then Reveal Answer (or press Space) and mark Knew it (+10) or Missed it. Misses still go to the Review Pool, so you can switch to Buzzer mode and test them under pressure.';
+function applyModeUI(){
+  $('speedWrap').style.display=(mode==='study')?'none':'';
+  $('modeHint').textContent=(mode==='study')?STUDY_HINT:BUZZ_HINT;
+}
+$('mode').addEventListener('change',function(){
+  mode=this.value;this.blur();
+  try{localStorage.setItem(KEY+'-mode',mode)}catch(e){}
+  applyModeUI();stopAll();current=null;
+  $('cardMeta').textContent='Card - / -';$('clock').textContent='-';
+  $('qtext').textContent='Mode set to '+(mode==='study'?'Study':'Buzzer')+'. Tap Start Training when ready.';
+  $('answer').className='a hidden';$('buzzline').className='hidden';
+  $('correct').disabled=true;$('wrong').disabled=true;$('skip').disabled=true;$('buzz').disabled=true;
+});
+try{var savedMode=localStorage.getItem(KEY+'-mode');if(savedMode==='study'||savedMode==='buzzer'){mode=savedMode}}catch(e){}
+$('mode').value=mode;applyModeUI();
+refreshPool();stats();
+</script>
+</html>
